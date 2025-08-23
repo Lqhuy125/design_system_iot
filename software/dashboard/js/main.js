@@ -14,7 +14,25 @@ const chart = new Chart(ctx, {
     responsive: true,
     animation: false,
     interaction: { mode: 'nearest', intersect: false },
-    plugins: { tooltip: { enabled: true } },
+    plugins: { 
+        tooltip: { enabled: true },
+        zoom: {
+            zoom: {
+              wheel: {
+                enabled: true // bật zoom bằng lăn chuột
+              },
+              pinch: {
+                enabled: true // bật zoom bằng cảm ứng
+              },
+              mode: 'x', // chỉ zoom theo trục X
+            },
+            pan: {
+              enabled: true, // bật pan (kéo qua lại)
+              mode: 'x'
+            }
+          }
+    
+    },
     scales: { x: {display: true}, y: {beginAtZero: true} }
   }
 });
@@ -95,6 +113,7 @@ function filterData() {
       chart.data.datasets[i].data = fullData.datasets[i].map(obj => obj.v);
     }
     chart.update();
+    chart.resetZoom();
   }
   
 
