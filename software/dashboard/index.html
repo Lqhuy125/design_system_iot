@@ -9,6 +9,19 @@
 <body>
     <h2>IoT Realtime Dashboard Demo (4 Node)</h2>
     <div class="card" id="ax">
+        <!-- Add time box to filter data -->
+        <div style="margin-bottom: 10px;">
+        <label for="startTime">Start Time: </label>
+        <input type="time" id="startTime">
+        
+        <label for="endTime" style="margin-left: 20px;">End Time: </label>
+        <input type="time" id="endTime">
+        
+        <button onclick="filterData()">Filter</button>
+        <button onclick="resetData()">Reset</button>
+        </div>
+        
+        <!-- tag to display chart -->
         <canvas id="chart"></canvas>
     </div>
 
