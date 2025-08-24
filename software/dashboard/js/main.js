@@ -50,6 +50,9 @@ let fullData = {
     datasets: [[], [], [], []]  // mỗi dataset lưu riêng
   };
 
+// 🔹 Giữ tối đa N điểm để chart không bị nặng
+const MAX_POINTS = 100; 
+
 let isFiltering = false;
   function addFakeData() {
     let time = new Date();
@@ -70,6 +73,14 @@ let isFiltering = false;
     for (let i = 0; i < 4; i++) {
       chart.data.datasets[i].data.push(fullData.datasets[i][fullData.datasets[i].length - 1].v);
     }
+
+     
+    if (chart.data.labels.length > MAX_POINTS) {
+        chart.data.labels.shift(); // bỏ điểm đầu
+        for (let i = 0; i < 4; i++) {
+            chart.data.datasets[i].data.shift();
+        }
+    }
   
     chart.update();
     //   bigChart.update();
@@ -77,6 +88,9 @@ let isFiltering = false;
   
 
 function filterData() {
+    /* Clear zoom in or zoom out when filter */
+    chart.resetZoom();
+
     let start = document.getElementById("startTime").value;
     let end = document.getElementById("endTime").value;
     if (!start || !end) return;
@@ -108,13 +122,19 @@ function filterData() {
   function resetData() {
     isFiltering = false; // tắt filter
   
-    chart.data.labels = fullData.labels.map(t => t.toLocaleTimeString());
+    // lấy số lượng dữ liệu gần nhất (nếu nhiều hơn MAX_POINTS thì cắt bớt ở đầu)
+    let startIndex = Math.max(0, fullData.labels.length - MAX_POINTS);
+
+    chart.data.labels = fullData.labels.slice(startIndex).map(t => t.toLocaleTimeString());
+
     for (let i = 0; i < 4; i++) {
-      chart.data.datasets[i].data = fullData.datasets[i].map(obj => obj.v);
+        chart.data.datasets[i].data = fullData.datasets[i]
+        .slice(startIndex)
+        .map(obj => obj.v);
     }
     chart.update();
     chart.resetZoom();
   }
   
 
-setInterval(addFakeData, 1000);
+setInterval(addFakeData, 100);
