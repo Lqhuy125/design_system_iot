@@ -21,7 +21,6 @@ void deserializeSensorData(SensorData &d, const uint8_t *buffer) {
   int idx = 0;
 
   memcpy(&d.id, &buffer[idx], sizeof(d.id)); idx += sizeof(d.id);
-  memcpy(&d.crc, &buffer[idx], sizeof(d.crc)); idx += sizeof(d.crc);
   memcpy(&d.accX, &buffer[idx], sizeof(d.accX)); idx += sizeof(d.accX);
   memcpy(&d.accY, &buffer[idx], sizeof(d.accY)); idx += sizeof(d.accY);
   memcpy(&d.accZ, &buffer[idx], sizeof(d.accZ)); idx += sizeof(d.accZ);
@@ -29,6 +28,7 @@ void deserializeSensorData(SensorData &d, const uint8_t *buffer) {
   memcpy(&d.gyroY, &buffer[idx], sizeof(d.gyroY)); idx += sizeof(d.gyroY);
   memcpy(&d.gyroZ, &buffer[idx], sizeof(d.gyroZ)); idx += sizeof(d.gyroZ);
   memcpy(&d.temperature, &buffer[idx], sizeof(d.temperature)); idx += sizeof(d.temperature);
+  memcpy(&d.crc, &buffer[idx], sizeof(d.crc)); idx += sizeof(d.crc);
 }
 
 void printSensorData_RECIEVE(const SensorData &d)
@@ -67,8 +67,8 @@ void RecieveData(void)
         uint8_t buffer[64];
         int len = 0;
         // Đọc dữ liệu vào buffer
-        while (LoRa.available()) {
-        buffer[len++] = (uint8_t)LoRa.read();
+        while (len < packetSize && LoRa.available()) {
+            buffer[len++] = (uint8_t)LoRa.read();
         }
 
         SensorData received;
@@ -84,5 +84,10 @@ void RecieveData(void)
         } else {
         Serial.println("❌ CRC ERROR");
         }
+
+        for (int i=0; i<sizeof(SensorData); i++) {
+            Serial.print(buffer[i], HEX); Serial.print(" ");
+        }
+        Serial.println();
     }
 }

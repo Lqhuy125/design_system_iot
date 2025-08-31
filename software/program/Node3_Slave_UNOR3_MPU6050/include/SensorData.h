@@ -3,12 +3,12 @@
 
 #include <Arduino.h>
 
-struct SensorData {
+struct __attribute__((packed)) SensorData {
   uint32_t id; 
-  uint32_t crc;
   float accX, accY, accZ;
   float gyroX, gyroY, gyroZ;
   float temperature;
+  uint32_t crc;
 };
 
 #endif

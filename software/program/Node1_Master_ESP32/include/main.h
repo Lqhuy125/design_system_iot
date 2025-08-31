@@ -2,5 +2,8 @@
 #define _MAIN_H
 
 #include <Arduino.h>
+#include <Wire.h>
+
+#include "ReciveLora.h"
 
 #endif

@@ -81,14 +81,34 @@ void readMPU() {
   float tmpture = temp.temperature;
 
   // Fill SensorData struct
-  data = {0x0003, 0, accx, accy, accz, gyrox, gyroy, gyroz, tmpture};
+  data = {0x0003, accx, accy, accz, gyrox, gyroy, gyroz, tmpture, 0};
 
   // CRC calculation (excluding crc field itself)
-  uint32_t crc = calcCRC32(&data, sizeof(data) - sizeof(data.crc));
+  uint32_t crc = calcCRC32(&data, sizeof(SensorData) - sizeof(data.crc));
 
   data.crc = crc;
 
   printSensorData_READ(data);
 
   delay(500);
+}
+
+int serializeSensorData(const SensorData &d, uint8_t *buffer) {
+  int idx = 0;
+
+  memcpy(&buffer[idx], &d.id, sizeof(d.id)); idx += sizeof(d.id);
+  memcpy(&buffer[idx], &d.accX, sizeof(d.accX)); idx += sizeof(d.accX);
+  memcpy(&buffer[idx], &d.accY, sizeof(d.accY)); idx += sizeof(d.accY);
+  memcpy(&buffer[idx], &d.accZ, sizeof(d.accZ)); idx += sizeof(d.accZ);
+  memcpy(&buffer[idx], &d.gyroX, sizeof(d.gyroX)); idx += sizeof(d.gyroX);
+  memcpy(&buffer[idx], &d.gyroY, sizeof(d.gyroY)); idx += sizeof(d.gyroY);
+  memcpy(&buffer[idx], &d.gyroZ, sizeof(d.gyroZ)); idx += sizeof(d.gyroZ);
+  memcpy(&buffer[idx], &d.temperature, sizeof(d.temperature)); idx += sizeof(d.temperature);
+  memcpy(&buffer[idx], &d.crc, sizeof(d.crc)); idx += sizeof(d.crc);
+
+  for (int i=0; i<sizeof(SensorData); i++) {
+      Serial.print(buffer[i], HEX); Serial.print(" ");
+  }
+  Serial.println();
+  return idx; // tổng số byte
 }

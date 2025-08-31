@@ -15,17 +15,12 @@ void InitLora(void)
 
 void SenData(const SensorData &data)
 {
-    // Copy sang mảng byte
-    uint8_t buffer[sizeof(SensorData)];
-    memcpy(buffer, &data, sizeof(SensorData));
+  uint8_t buffer[64]; // đủ lớn
+  int len = serializeSensorData(data, buffer);
 
-    // Debug ra Serial
-    printSensorData_SEND(data);
-
-    // Gửi qua LoRa
-    LoRa.beginPacket();
-    LoRa.write(buffer, sizeof(SensorData));
-    LoRa.endPacket();
+  LoRa.beginPacket();
+  LoRa.write(buffer, len);
+  LoRa.endPacket();
 }
 
 void printSensorData_SEND(const SensorData &d) {
