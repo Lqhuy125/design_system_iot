@@ -65,6 +65,8 @@ void InitMPU(void)
     delay(100);
 }
 
+uint8_t idx = 2;
+
 void readMPU() {
   // đọc dữ liệu từ mpu
   /* Get new sensor events with the readings */
@@ -72,6 +74,7 @@ void readMPU() {
   mpu.getEvent(&a, &g, &temp);
   /* Print out the values */
 
+  
   float accx = a.acceleration.x;
   float accy = a.acceleration.y;
   float accz = a.acceleration.z;
@@ -81,7 +84,7 @@ void readMPU() {
   float tmpture = temp.temperature;
 
   // Fill SensorData struct
-  data = {0x0003, accx, accy, accz, gyrox, gyroy, gyroz, tmpture, 0};
+  data = {idx, accx, accy, accz, gyrox, gyroy, gyroz, tmpture, 0};
 
   // CRC calculation (excluding crc field itself)
   uint32_t crc = calcCRC32(&data, sizeof(SensorData) - sizeof(data.crc));
@@ -91,6 +94,13 @@ void readMPU() {
   printSensorData_READ(data);
 
   delay(500);
+  
+  // Ramdom node
+  if(idx == 2) idx = 4;
+  else if (idx == 4) idx = 3;
+  else if (idx == 3) idx = 5;
+  else if (idx == 5) idx = 1;
+  else if (idx == 1) idx = 2;
 }
 
 int serializeSensorData(const SensorData &d, uint8_t *buffer) {

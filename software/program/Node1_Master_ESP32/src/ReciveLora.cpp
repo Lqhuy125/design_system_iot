@@ -1,5 +1,7 @@
 #include "ReciveLora.h"
 
+SensorData nodeData[MAX_NODES];
+
 uint32_t calcCRC32(const void *data, size_t length) {
     const uint8_t *bytes = (const uint8_t*)data;
     uint32_t crc = 0xFFFFFFFF;   // initial value
@@ -49,6 +51,7 @@ void printSensorData_RECIEVE(const SensorData &d)
 
     Serial.print("Temp: "); Serial.println(d.temperature, 2);
 }
+
 void InitLora(void){
     Serial.println("LoRa Receiver");
     LoRa.setPins(ss, rst, dio0);
@@ -77,14 +80,26 @@ void RecieveData(void)
         // in ra kết quả
         printSensorData_RECIEVE(received);
 
-        // Bây giờ có thể check CRC
+        // check CRC
         uint32_t calc = calcCRC32(&received, sizeof(SensorData) - sizeof(received.crc));
         if (calc == received.crc) {
-        Serial.println("✅ CRC OK");
+            Serial.println("✅ CRC OK");
+            /* printSensorData_RECIEVE(received); */
+            publishNodeData(received);
+
+            // lưu dữ liệu theo node ID
+            if (received.id > 0 && received.id <= MAX_NODES) {
+                nodeData[received.id - 1] = received;
+                Serial.print("📡 Saved data for Node "); Serial.println(received.id);
+            } else {
+                Serial.print("⚠️ Unknown Node ID: "); Serial.println(received.id);
+            }
+
         } else {
-        Serial.println("❌ CRC ERROR");
+            Serial.println("❌ CRC ERROR");
         }
 
+        // debug raw bytes
         for (int i=0; i<sizeof(SensorData); i++) {
             Serial.print(buffer[i], HEX); Serial.print(" ");
         }

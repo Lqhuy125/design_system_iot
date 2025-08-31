@@ -6,9 +6,13 @@
 #include <LoRa.h>
 #include "SensorData.h"
 
+#define MAX_NODES 5
+
 #define ss 15
 #define rst 14
 #define dio0 2
+
+extern void publishNodeData(const SensorData &d);
 
 void InitLora(void);
 
