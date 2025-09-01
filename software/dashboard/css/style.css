@@ -43,4 +43,43 @@ body {
     width: 90% !important;
     height: 80% !important;
   }
+  .grid {
+    /* display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-gap: 20px; */
+    grid-column: span 3;
+  }
+  .card {
+    background: #fff;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  }
   
+  .card.full {
+    margin-top: 20px;
+  }
+
+  body {
+    font-family: Arial, sans-serif;
+    background: #f6f8fa;
+    padding: 20px;
+  }
+  
+  .dashboard {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* 2 cột */
+    grid-gap: 20px;
+  }
+  
+  .column {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+
+  
+  .filter {
+    margin-bottom: 10px;
+  }
