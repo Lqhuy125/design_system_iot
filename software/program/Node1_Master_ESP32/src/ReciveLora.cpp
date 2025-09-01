@@ -105,4 +105,9 @@ void RecieveData(void)
         }
         Serial.println();
     }
+    else
+    {
+        // Serial.println("========4_Read fail");
+    }
+        
 }

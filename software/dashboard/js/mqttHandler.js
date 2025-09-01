@@ -64,11 +64,22 @@ client.on("message", function (topic, message) {
 
     // nếu đang filter thì không update chart
     if (isFiltering) return;
+    else
+    {
+      // tìm node có nhiều điểm nhất
+      let longestNode = fullData.datasets.reduce((a, b) =>
+      a.length > b.length ? a : b
+      );
 
-    // Nếu label mới khác label cuối cùng → thêm label mới
-    if (timeLabel !== lastLabel) {
-      chart.data.labels.push(timeLabel);
-      lastLabel = timeLabel;
+      // cập nhật trục X = timestamps của node dài nhất
+      chart.data.labels = longestNode.map(p => p.t.toLocaleTimeString());
+
+      // cập nhật dữ liệu từng node
+      chart.data.datasets.forEach((ds, i) => {
+      ds.data = fullData.datasets[i].map(obj => obj.v);
+      });
+      
+      chart.update('none');
     }
 
     // thêm giá trị vào đúng dataset
@@ -76,13 +87,13 @@ client.on("message", function (topic, message) {
 
     // nếu vượt quá MAX_POINTS thì dịch chart
     if (chart.data.labels.length > MAX_POINTS) {
-        chart.data.labels.shift();
-        for (let i = 0; i < 4; i++) {
-          chart.data.datasets[i].data.shift();
-        }
+      chart.data.labels.shift();
+      for (let i = 0; i < 4; i++) {
+        chart.data.datasets[i].data.shift();
       }
+    }
 
-      // Force update ngay lập tức, không cần zoom/pan
-      chart.update('none');
+    // ⚡ force update ngay lập tức, không cần zoom/pan
+    chart.update('none');
     }
 });

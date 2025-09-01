@@ -3,14 +3,14 @@
 WiFiClient espClient;
 PubSubClient client(espClient);
 
-const char *ssid = "QUANGHUY";
-const char *password = "12121213";
+const char *ssid = "VNPT_ YL 5G";
+const char *password = "khongnho12";
 /* Use test.mosquitto.org when can not connect for that 
 
 ws://broker.hivemq.com:8000/mqtt
 
 */
-const char *mqttServer = "test.mosquitto.org"; 
+const char *mqttServer = "broker.hivemq.com"; 
 const int mqttPort = 1883; /* 1883 */
 
 void Init_Connection()
@@ -24,9 +24,13 @@ void Init_Connection()
     Serial.println(WiFi.localIP());
 
     client.setServer(mqttServer, mqttPort);//connecting to mqtt server
+    Serial.println("========1");
     client.setCallback(callback);
+    Serial.println("========2");
     
     client.connect("ESP32_clientID");  // ESP will connect to mqtt broker with clientID
+    Serial.println("========3");
+    
 }
 
 void publishNodeData(const SensorData &d) {
