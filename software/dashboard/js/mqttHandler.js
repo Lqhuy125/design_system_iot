@@ -57,6 +57,8 @@ client.on("message", (topic, message) => {
   let match = topic.match(/bridge\/node(\d+)\/(acc|gyro|tmpture)\/?([xyz])?/);
   if (!match) return;
 
+  if(isFiltering) return;
+
   let nodeIndex = parseInt(match[1]) - 1;
   let type = match[2]; // acc, gyro, tmpture
   let axis = match[3]; // x,y,z or undefined
