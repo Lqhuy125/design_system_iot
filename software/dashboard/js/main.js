@@ -1,107 +1,126 @@
-const ctx = document.getElementById('chart').getContext('2d');
-const chart = new Chart(ctx, {
-  type: 'line',
-  data: {
-    labels: [],
-    datasets: [
-      {label: 'Node1 ax', data: [], borderColor: 'red', fill: false, borderWidth: 1, pointRadius: 0,},
-      {label: 'Node2 ax', data: [], borderColor: 'blue', fill: false, borderWidth: 1, pointRadius: 0,},
-      {label: 'Node3 ax', data: [], borderColor: 'green', fill: false, borderWidth: 1, pointRadius: 0,},
-      {label: 'Node4 ax', data: [], borderColor: 'purple', fill: false, borderWidth: 1, pointRadius: 0,}
-    ]
-  },
-  options: {
-    responsive: true,
-    animation: false,
-    interaction: { mode: 'nearest', intersect: false },
-    plugins: { 
-        tooltip: { enabled: true },
-        zoom: {
-            zoom: {
-              wheel: {
-                enabled: true // bật zoom bằng lăn chuột
-              },
-              pinch: {
-                enabled: true // bật zoom bằng cảm ứng
-              },
-              mode: 'x', // chỉ zoom theo trục X
-            },
-            pan: {
-              enabled: true, // bật pan (kéo qua lại)
-              mode: 'x'
+// Cấu hình chung
+const MAX_POINTS = 30;
+
+let isFiltering = false
+
+// Danh sách chart
+const chartKeys = ["accX", "accY", "accZ", "gyroX", "gyroY", "gyroZ", "temp"];
+
+// Mỗi chart có 4 dataset (Node1-4)
+window.fullData = {};
+window.charts = {};
+
+const colors = ["red", "blue", "green", "purple"];
+
+// Hàm tạo chart
+function createChart(ctx, label) {
+  return new Chart(ctx, {
+    type: "line",
+    data: {
+      datasets: [
+        { label: "Node1 " + label, borderColor: colors[0], borderWidth: 1, pointRadius: 0, data: [], fill: false },
+        { label: "Node2 " + label, borderColor: colors[1], borderWidth: 1, pointRadius: 0, data: [], fill: false },
+        { label: "Node3 " + label, borderColor: colors[2], borderWidth: 1, pointRadius: 0, data: [], fill: false },
+        { label: "Node4 " + label, borderColor: colors[3], borderWidth: 1, pointRadius: 0, data: [], fill: false }
+      ]
+    },
+    options: {
+      responsive: true,
+      animation: false,
+      interaction: {
+        // mode: "nearest",   // Lấy điểm gần chuột
+        mode: "index",
+        intersect: false
+      },
+      plugins: {
+        tooltip: {
+          enabled: true,
+          // mode: "nearest",
+          mode: "index",
+          intersect: false,
+          callbacks: {
+            label: function(context) {
+              let label = context.dataset.label || "";
+              let value = context.parsed.y;
+              let time = new Date(context.parsed.x).toLocaleTimeString();
+              return `${label}: ${value} (${time})`;
             }
           }
-    
-    },
-    scales: { x: {display: true}, y: {beginAtZero: true} }
-  }
-});
-
-// const bigCtx = document.getElementById('bigChart').getContext('2d');
-// const bigChart = new Chart(bigCtx, {
-//   type: 'line',
-//   data: chart.data, /* "data" can not use for many chart */
-//   options: chart.options
-// });
-
-/* Array to save all data for filtering */
-let fullData = {
-    labels: [],
-    datasets: [[], [], [], []]  // mỗi dataset lưu riêng
-  };
-
-// 🔹 Giữ tối đa N điểm để chart không bị nặng
-const MAX_POINTS = 100; 
-
-let isFiltering = false;
-
-function filterData() {
-    /* Clear zoom in or zoom out when filter */
-    chart.resetZoom();
-
-    let start = document.getElementById("startTime").value;
-    let end = document.getElementById("endTime").value;
-    if (!start || !end) return;
-  
-    isFiltering = true;  // bật cờ filter
-  
-    let today = new Date().toDateString();
-    let startDate = new Date(today + " " + start);
-    let endDate = new Date(today + " " + end);
-  
-    chart.data.labels = [];
-    for (let i = 0; i < 4; i++) {
-      chart.data.datasets[i].data = [];
-    }
-  
-    fullData.labels.forEach((time, idx) => {
-      if (time >= startDate && time <= endDate) {
-        chart.data.labels.push(time.toLocaleTimeString());
-        for (let i = 0; i < 4; i++) {
-          chart.data.datasets[i].data.push(fullData.datasets[i][idx].v);
+        },
+        zoom: {
+          zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: "x" },
+          pan: { enabled: true, mode: "x" }
+        }
+      },
+      scales: {
+        x: {
+          type: "time",
+          time: { unit: "second" }
+        },
+        y: {
+          beginAtZero: true
         }
       }
-    });
-  
-    chart.update();
-  }
-  
-
-  function resetData() {
-    isFiltering = false; // tắt filter
-  
-    // lấy số lượng dữ liệu gần nhất (nếu nhiều hơn MAX_POINTS thì cắt bớt ở đầu)
-    let startIndex = Math.max(0, fullData.labels.length - MAX_POINTS);
-
-    chart.data.labels = fullData.labels.slice(startIndex).map(t => t.toLocaleTimeString());
-
-    for (let i = 0; i < 4; i++) {
-        chart.data.datasets[i].data = fullData.datasets[i]
-        .slice(startIndex)
-        .map(obj => obj.v);
     }
-    chart.update();
-    chart.resetZoom();
+  });
+}
+
+// Khởi tạo tất cả chart
+window.addEventListener("DOMContentLoaded", () => {
+  /* Start begin Y = 0, need to config in "scales" */
+  chartKeys.forEach(key => {
+    fullData[key] = [[], [], [], []]; // 4 node
+    let ctx = document.getElementById("chart" + key.charAt(0).toUpperCase() + key.slice(1)).getContext("2d");
+    charts[key] = createChart(ctx, key);
+  });
+});
+
+// ========== FILTER / RESET ==========
+
+function filterData(chartKey) {
+
+  charts[chartKey].resetZoom();
+  charts[chartKey].update("none");
+
+  let start = document.getElementById("start" + chartKey.charAt(0).toUpperCase() + chartKey.slice(1)).value;
+  let end = document.getElementById("end" + chartKey.charAt(0).toUpperCase() + chartKey.slice(1)).value;
+  if (!start || !end) return;
+
+  isFiltering = true;
+
+  let today = new Date();
+  let [sh, sm] = start.split(":");
+  let [eh, em] = end.split(":");
+  let startDate = new Date(today); startDate.setHours(sh, sm, 0, 0);
+  let endDate = new Date(today); endDate.setHours(eh, em, 0, 0);
+
+  fullData[chartKey].forEach((arr, idx) => {
+    charts[chartKey].data.datasets[idx].data = arr.filter(p => p.x >= startDate && p.x <= endDate);
+  });
+  charts[chartKey].update();
+}
+
+function resetData(chartKey) {
+  isFiltering = false;
+
+  fullData[chartKey].forEach((arr, idx) => {
+    let startIndex = Math.max(0, arr.length - MAX_POINTS);
+    charts[chartKey].data.datasets[idx].data = arr.slice(startIndex);
+  });
+  charts[chartKey].resetZoom();
+  charts[chartKey].update("none");
+}
+
+// Cho MQTT gọi update
+window.updateChart = function (chartKey, nodeIndex, value) {
+  let now = new Date();
+  let point = { x: now, y: value };
+
+  fullData[chartKey][nodeIndex].push(point);
+  if (fullData[chartKey][nodeIndex].length > MAX_POINTS) {
+    fullData[chartKey][nodeIndex].shift();
   }
 
-
+  charts[chartKey].data.datasets[nodeIndex].data = fullData[chartKey][nodeIndex];
+  charts[chartKey].update("none");
+};

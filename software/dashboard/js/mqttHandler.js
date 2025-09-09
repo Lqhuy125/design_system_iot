@@ -1,99 +1,74 @@
-// Kết nối tới MQTT Broker qua WebSocket
+// Kết nối tới MQTT Broker
 const client = mqtt.connect("wss://broker.hivemq.com:8884/mqtt");
-// const client = mqtt.connect("ws://broker.hivemq.com:8000/mqtt", {
-//   clientId: "webClient_" + Math.random().toString(16).substr(2, 8)
-// });
 
-// Khi kết nối thành công
 client.on("connect", () => {
   console.log("✅ Connected to MQTT broker");
-  // Subcribe các topic của 4 node
-  client.subscribe("bridge/node1/acc/x");
-  client.subscribe("bridge/node1/acc/y");
-  client.subscribe("bridge/node1/acc/z");
-  client.subscribe("bridge/node1/gyro/x");
-  client.subscribe("bridge/node1/gyro/y");
-  client.subscribe("bridge/node1/gyro/z");
-  client.subscribe("bridge/node1/tmpture");
 
-  client.subscribe("bridge/node2/acc/x");
-  client.subscribe("bridge/node2/acc/y");
-  client.subscribe("bridge/node2/acc/z");
-  client.subscribe("bridge/node2/gyro/x");
-  client.subscribe("bridge/node2/gyro/y");
-  client.subscribe("bridge/node2/gyro/z");
-  client.subscribe("bridge/node2/tmpture");
-
-  client.subscribe("bridge/node3/acc/x");
-  client.subscribe("bridge/node3/acc/y");
-  client.subscribe("bridge/node3/acc/z");
-  client.subscribe("bridge/node3/gyro/x");
-  client.subscribe("bridge/node3/gyro/y");
-  client.subscribe("bridge/node3/gyro/z");
-  client.subscribe("bridge/node3/tmpture");
-
-  client.subscribe("bridge/node4/acc/x");
-  client.subscribe("bridge/node4/acc/y");
-  client.subscribe("bridge/node4/acc/z");
-  client.subscribe("bridge/node4/gyro/x");
-  client.subscribe("bridge/node4/gyro/y");
-  client.subscribe("bridge/node4/gyro/z");
-  client.subscribe("bridge/node4/tmpture");
+  // Subscribe tất cả topic
+  for (let i = 1; i <= 4; i++) {
+    ["acc/x", "acc/y", "acc/z", "gyro/x", "gyro/y", "gyro/z", "tmpture"].forEach(topic => {
+      client.subscribe(`bridge/node${i}/${topic}`);
+    });
+  }
 });
 
-let lastLabel = null;
+// Mapping topic → dataset index
+const topicMap = {
+  "bridge/node1/acc/x": { chart:"accX", index:0 },
+  "bridge/node2/acc/x": { chart:"accX", index:1 },
+  "bridge/node3/acc/x": { chart:"accX", index:2 },
+  "bridge/node4/acc/x": { chart:"accX", index:3 },
 
-// Lắng nghe dữ liệu từ MQTT
-client.on("message", function (topic, message) {
-  const payload = parseFloat(message.toString());
-  if (isNaN(payload)) return;
+  "bridge/node1/acc/y": { chart:"accY", index:0 },
+  "bridge/node2/acc/y": { chart:"accY", index:1 },
+  "bridge/node3/acc/y": { chart:"accY", index:2 },
+  "bridge/node4/acc/y": { chart:"accY", index:3 },
 
-  let nodeIndex;
-  if (topic.includes("node1/acc/x")) nodeIndex = 0;
-  if (topic.includes("node2/acc/x")) nodeIndex = 1;
-  if (topic.includes("node3/acc/x")) nodeIndex = 2;
-  if (topic.includes("node4/acc/x")) nodeIndex = 3;
+  "bridge/node1/acc/z": { chart:"accZ", index:0 },
+  "bridge/node2/acc/z": { chart:"accZ", index:1 },
+  "bridge/node3/acc/z": { chart:"accZ", index:2 },
+  "bridge/node4/acc/z": { chart:"accZ", index:3 },
 
-  if (nodeIndex !== undefined) {
-    let time = new Date();
-    let timeLabel = time.toLocaleTimeString();
+  "bridge/node1/gyro/x": { chart:"gyroX", index:0 },
+  "bridge/node2/gyro/x": { chart:"gyroX", index:1 },
+  "bridge/node3/gyro/x": { chart:"gyroX", index:2 },
+  "bridge/node4/gyro/x": { chart:"gyroX", index:3 },
 
-    // luôn lưu dữ liệu đầy đủ
-    fullData.labels.push(time);
-    fullData.datasets[nodeIndex].push({ t: time, v: payload });
+  "bridge/node1/gyro/y": { chart:"gyroY", index:0 },
+  "bridge/node2/gyro/y": { chart:"gyroY", index:1 },
+  "bridge/node3/gyro/y": { chart:"gyroY", index:2 },
+  "bridge/node4/gyro/y": { chart:"gyroY", index:3 },
 
-    // nếu đang filter thì không update chart
-    if (isFiltering) return;
-    else
-    {
-      // tìm node có nhiều điểm nhất
-      let longestNode = fullData.datasets.reduce((a, b) =>
-      a.length > b.length ? a : b
-      );
+  "bridge/node1/gyro/z": { chart:"gyroZ", index:0 },
+  "bridge/node2/gyro/z": { chart:"gyroZ", index:1 },
+  "bridge/node3/gyro/z": { chart:"gyroZ", index:2 },
+  "bridge/node4/gyro/z": { chart:"gyroZ", index:3 },
 
-      // cập nhật trục X = timestamps của node dài nhất
-      chart.data.labels = longestNode.map(p => p.t.toLocaleTimeString());
+  "bridge/node1/tmpture": { chart:"temp", index:0 },
+  "bridge/node2/tmpture": { chart:"temp", index:1 },
+  "bridge/node3/tmpture": { chart:"temp", index:2 },
+  "bridge/node4/tmpture": { chart:"temp", index:3 }
+};
 
-      // cập nhật dữ liệu từng node
-      chart.data.datasets.forEach((ds, i) => {
-      ds.data = fullData.datasets[i].map(obj => obj.v);
-      });
-      
-      chart.update('none');
-    }
+client.on("message", (topic, message) => {
+  let val = parseFloat(message.toString());
+  if (isNaN(val)) return;
 
-    // thêm giá trị vào đúng dataset
-    chart.data.datasets[nodeIndex].data.push(payload);
+  let match = topic.match(/bridge\/node(\d+)\/(acc|gyro|tmpture)\/?([xyz])?/);
+  if (!match) return;
 
-    // nếu vượt quá MAX_POINTS thì dịch chart
-    if (chart.data.labels.length > MAX_POINTS) {
-      chart.data.labels.shift();
-      for (let i = 0; i < 4; i++) {
-        chart.data.datasets[i].data.shift();
-      }
-    }
+  if(isFiltering) return;
 
-    // ⚡ force update ngay lập tức, không cần zoom/pan
-    chart.update('none');
-    }
+  let nodeIndex = parseInt(match[1]) - 1;
+  let type = match[2]; // acc, gyro, tmpture
+  let axis = match[3]; // x,y,z or undefined
+
+  let chartKey = "";
+  if (type === "acc") chartKey = "acc" + axis.toUpperCase();
+  else if (type === "gyro") chartKey = "gyro" + axis.toUpperCase();
+  else if (type === "tmpture") chartKey = "temp";
+
+  if (chartKey && window.updateChart) {
+    window.updateChart(chartKey, nodeIndex, val);
+  }
 });

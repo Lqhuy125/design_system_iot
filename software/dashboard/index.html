@@ -1,50 +1,120 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>IoT Dashboard Demo (No MQTT)</title>
-    <link rel="stylesheet" href="css/style.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <meta charset="UTF-8">
+  <title>IoT Dashboard</title>
+  <link rel="stylesheet" href="css/style.css">
 
-    <!-- zoom out use mouse -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
-
-    <!-- use MQTT service -->
-    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
-    
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 </head>
 <body>
-    <h2>IoT Realtime Dashboard Demo (4 Node)</h2>
-    <div class="card" id="ax">
-        <!-- Add time box to filter data -->
-        <div style="margin-bottom: 10px;">
-        <label for="startTime">Start Time: </label>
-        <input type="time" id="startTime">
-        
-        <label for="endTime" style="margin-left: 20px;">End Time: </label>
-        <input type="time" id="endTime">
-        
-        <button onclick="filterData()">Filter</button>
-        <button onclick="resetData()">Reset</button>
+  <h2>IoT Realtime Dashboard Demo (4 Node)</h2>
+
+  <div class="dashboard">
+
+    <!-- Left column: ACC -->
+    <div class="column">
+      <div class="card">
+        <h3>ACC X</h3>
+        <div class="filter">
+          <label>Start:</label>
+          <input type="time" id="startAccX">
+          <label>End:</label>
+          <input type="time" id="endAccX">
+          <button onclick="filterData('accX')">Filter</button>
+          <button onclick="resetData('accX')">Reset</button>
         </div>
-        
-        <!-- tag to display chart -->
-        <canvas id="chart"></canvas>
+        <canvas id="chartAccX"></canvas>
+      </div>
+
+      <div class="card">
+        <h3>ACC Y</h3>
+        <div class="filter">
+          <label>Start:</label>
+          <input type="time" id="startAccY">
+          <label>End:</label>
+          <input type="time" id="endAccY">
+          <button onclick="filterData('accY')">Filter</button>
+          <button onclick="resetData('accY')">Reset</button>
+        </div>
+        <canvas id="chartAccY"></canvas>
+      </div>
+
+      <div class="card">
+        <h3>ACC Z</h3>
+        <div class="filter">
+          <label>Start:</label>
+          <input type="time" id="startAccZ">
+          <label>End:</label>
+          <input type="time" id="endAccZ">
+          <button onclick="filterData('accZ')">Filter</button>
+          <button onclick="resetData('accZ')">Reset</button>
+        </div>
+        <canvas id="chartAccZ"></canvas>
+      </div>
     </div>
 
-    <!-- <div class="overlay" id="overlay">
-        <canvas id="bigChart"></canvas>
-    </div> -->
+    <!-- Right column: Gyro -->
+    <div class="column">
+      <div class="card">
+        <h3>Gyro X</h3>
+        <div class="filter">
+          <label>Start:</label>
+          <input type="time" id="startGyroX">
+          <label>End:</label>
+          <input type="time" id="endGyroX">
+          <button onclick="filterData('gyroX')">Filter</button>
+          <button onclick="resetData('gyroX')">Reset</button>
+        </div>
+        <canvas id="chartGyroX"></canvas>
+      </div>
 
-    <script src="js/main.js"></script>
+      <div class="card">
+        <h3>Gyro Y</h3>
+        <div class="filter">
+          <label>Start:</label>
+          <input type="time" id="startGyroY">
+          <label>End:</label>
+          <input type="time" id="endGyroY">
+          <button onclick="filterData('gyroY')">Filter</button>
+          <button onclick="resetData('gyroY')">Reset</button>
+        </div>
+        <canvas id="chartGyroY"></canvas>
+      </div>
 
-    <!-- Recieve data via mqtt -->
-    <script src="js/mqttHandler.js"></script>
+      <div class="card">
+        <h3>Gyro Z</h3>
+        <div class="filter">
+          <label>Start:</label>
+          <input type="time" id="startGyroZ">
+          <label>End:</label>
+          <input type="time" id="endGyroZ">
+          <button onclick="filterData('gyroZ')">Filter</button>
+          <button onclick="resetData('gyroZ')">Reset</button>
+        </div>
+        <canvas id="chartGyroZ"></canvas>
+      </div>
+    </div>
+  </div>
 
-    <!-- Use to test data in chart -->
-    <!-- <script src="js/fakeData.js"></script> -->
+  <!-- Full width temperature -->
+  <div class="card full">
+    <h3>Temperature</h3>
+    <div class="filter">
+      <label>Start:</label>
+      <input type="time" id="startTemp">
+      <label>End:</label>
+      <input type="time" id="endTemp">
+      <button onclick="filterData('temp')">Filter</button>
+      <button onclick="resetData('temp')">Reset</button>
+    </div>
+    <canvas id="chartTemp"></canvas>
+  </div>
 
-    <!-- <script src="js/overlay.js"></script> -->
+  <script src="js/main.js"></script>
+  <script src="js/mqttHandler.js"></script>
 </body>
 </html>
