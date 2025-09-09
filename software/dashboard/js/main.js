@@ -1,5 +1,5 @@
 // Cấu hình chung
-const MAX_POINTS = 100;
+const MAX_POINTS = 30;
 
 let isFiltering = false
 
@@ -81,7 +81,7 @@ function filterData(chartKey) {
 
   charts[chartKey].resetZoom();
   charts[chartKey].update("none");
-  
+
   let start = document.getElementById("start" + chartKey.charAt(0).toUpperCase() + chartKey.slice(1)).value;
   let end = document.getElementById("end" + chartKey.charAt(0).toUpperCase() + chartKey.slice(1)).value;
   if (!start || !end) return;
