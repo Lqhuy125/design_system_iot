@@ -1,0 +1,27 @@
+{
+	"folders": [
+		{
+			"path": "Node2_Slave_MPU6050"
+		},
+		{
+			"name": "Node3_Slave_UNOR3_MPU6050",
+			"path": "Node3_Slave_UNOR3_MPU6050"
+		},
+		{
+			"name": "Node1_Master_ESP32",
+			"path": "Node1_Master_ESP32"
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"array": "cpp",
+			"deque": "cpp",
+			"string": "cpp",
+			"unordered_map": "cpp",
+			"unordered_set": "cpp",
+			"vector": "cpp",
+			"string_view": "cpp",
+			"initializer_list": "cpp"
+		}
+	}
+}
