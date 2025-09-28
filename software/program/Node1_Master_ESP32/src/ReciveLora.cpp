@@ -90,7 +90,7 @@ void RecieveData(void)
             // lưu dữ liệu theo node ID
             if (received.id > 0 && received.id <= MAX_NODES) {
                 nodeData[received.id - 1] = received;
-                Serial.print("📡 Saved data for Node "); Serial.println(received.id);
+                Serial.print("===>>>Saved data for Node "); Serial.println(received.id);
             } else {
                 Serial.print("⚠️ Unknown Node ID: "); Serial.println(received.id);
             }

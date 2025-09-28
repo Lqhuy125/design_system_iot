@@ -68,7 +68,7 @@ void publishNodeData(const SensorData &d) {
     dtostrf(d.temperature, 6, 2, payload);
     client.publish(topic, payload);
 
-    Serial.print("📡 Published data for Node "); 
+    Serial.print("===>>>Published data for Node "); 
     Serial.println(d.id);
 
     if (!client.connected())
