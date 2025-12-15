@@ -6,5 +6,7 @@
 
 #include "ReciveLora.h"
 #include "MQTT.h"
+#include "Sensor.h"
+#include "MahonyAHRS.h"
 
 #endif

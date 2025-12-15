@@ -11,4 +11,9 @@ struct __attribute__((packed)) SensorData {
   uint32_t crc;
 };
 
+typedef struct {
+  float ax, ay, az;  // in g
+  float gx, gy, gz;  // in rad/s
+  float dt;          // seconds between samples
+} IMUSample;
 #endif
