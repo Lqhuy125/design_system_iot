@@ -231,7 +231,7 @@ float invSqrt(float x) {
 
 void MahonyAHRSGetIMU(const IMUSample *s)
 {
-	MahonyAHRSupdateIMU(s->ax, s->ay, s->az, s->gx, s->gy, s->gz);
+	MahonyAHRSupdateIMU(s->gx, s->gy, s->gz, s->ax, s->ay, s->az);
 }
 
 
@@ -240,9 +240,9 @@ void ahrs_get_euler(float* roll_deg, float* pitch_deg, float* yaw_deg) {
   float pitch = asinf (2.0f*(q0*q2 - q3*q1));
   float yaw   = atan2f(2.0f*(q0*q3 + q1*q2), 1.0f - 2.0f*(q2*q2 + q3*q3));
   const float RAD2DEG = 57.29577951308232f;
-  if (roll_deg)  *roll_deg  = roll  * RAD2DEG;
-  if (pitch_deg) *pitch_deg = pitch * RAD2DEG;
-  if (yaw_deg)   *yaw_deg   = yaw   * RAD2DEG;
+  /* if (roll_deg)   */*roll_deg  = roll  * RAD2DEG;
+  /* if (pitch_deg)  */*pitch_deg = pitch * RAD2DEG;
+  /* if (yaw_deg)    */*yaw_deg   = yaw   * RAD2DEG;
 }
 
 //====================================================================================================

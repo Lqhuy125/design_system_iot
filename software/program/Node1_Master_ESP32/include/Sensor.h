@@ -11,4 +11,6 @@ void Init_MPU6050();
 
 int sensor_read(IMUSample* out);
 
+// FreeRTOS task entry (// FreeRTOS task entry (pv = QueueHandle_t*)
+void sensor_task(void* pv);
 #endif

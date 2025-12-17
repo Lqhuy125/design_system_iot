@@ -23,22 +23,15 @@ int sensor_read(IMUSample* out)
   sensors_event_t a, g, temp;
   mpu.getEvent(&a, &g, &temp);
   /* Print out the values */
-
-  out->ax = a.acceleration.x;
-  out->ay = a.acceleration.y;
-  out->az = a.acceleration.z;
+  const float MS2_TO_G = 1.0f / 9.80665f;
+  
+  out->ax = a.acceleration.x * MS2_TO_G;
+  out->ay = a.acceleration.y * MS2_TO_G;
+  out->az = (a.acceleration.z * MS2_TO_G) - 0.2;
   out->gx = a.gyro.x;
   out->gy = a.gyro.y;
   out->gz = a.gyro.z;
 
-  float norm = sqrtf(out->ax*out->ax + out->ay*out->ay + out->az*out->az);
-  
-  if (norm > 2) //m/s^2 ~ 9.8 and g ~ 1
-  {
-    out->ax = out->ax / 9.8;
-    out->ay = out->ay / 9.8;
-    out->az = out->az / 9.8;
-  } 
   int32_t now = micros();
   float dt = (now - lastMicros) * 1e-6f;
   lastMicros = now;
@@ -48,5 +41,23 @@ int sensor_read(IMUSample* out)
   out->dt = dt;
 
   return 0;
+}
 
+
+// ------------------- FreeRTOS Sensor Task -------------------
+
+void sensor_task(void* pv) 
+{
+  QueueHandle_t q = (QueueHandle_t)pv;
+  const TickType_t periodTicks = pdMS_TO_TICKS(5); //  const TickType_t periodTicks = pdMS_TO_TICKS(5); // ~200 Hz
+  TickType_t lastWake = xTaskGetTickCount();
+
+  for (;;) {
+    IMUSample s;
+    if (sensor_read(&s) == 0) {
+      // gửi vào queue (không block quá lâu)
+      xQueueSend(q, &s, 0);
+    }
+    vTaskDelayUntil(&lastWake, periodTicks);
+  }
 }
