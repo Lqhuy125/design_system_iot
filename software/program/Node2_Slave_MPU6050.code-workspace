@@ -10,6 +10,12 @@
 		{
 			"name": "Node1_Master_ESP32",
 			"path": "Node1_Master_ESP32"
+		},
+		{
+			"path": "Node4_Slave_Lora_MPU_Stm32f103"
+		},
+		{
+			"path": "../../.."
 		}
 	],
 	"settings": {
