@@ -8,9 +8,14 @@
 
 #define MAX_NODES 5
 
-#define ss 15
+// ESP32S SS = 5 rst=14
+#define ss 5
 #define rst 14
 #define dio0 2
+// ESP32 devkitv1 SS=15 rst=4
+// #define ss 15
+// #define rst 4
+// #define dio0 2
 
 extern void publishNodeData(const SensorData &d);
 

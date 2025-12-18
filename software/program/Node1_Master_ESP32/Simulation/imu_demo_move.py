@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Demo IMU (ACC+GYRO) với 3D triad **di chuyển** xung quanh, không đứng im tại gốc.
-- Sinh dữ liệu synthetic: chỉ ACC (g) + GYRO (deg/s)
+- Sinh dữ liệu syntic: chỉ ACC (g) + GYRO (deg/s)the
 - Tính orientation (Mahony IMU) + xấp xỉ vị trí (dead-reckoning) từ acc
 - Tuỳ chọn vẽ theo **quỹ đạo thật** (true trajectory) để đảm bảo hình di chuyển rõ ràng
 
@@ -44,27 +44,43 @@ class MahonyIMU:
         norm_acc = np.sqrt(ax_g*ax_g + ay_g*ay_g + az_g*az_g)
         if norm_acc >= 1e-6:
             ax, ay, az = ax_g/norm_acc, ay_g/norm_acc, az_g/norm_acc
+            # Estimated direction of gravity and vector perpendicular to magnetic flux
             halfvx = q1*q3 - q0*q2
             halfvy = q0*q1 + q2*q3
             halfvz = q0*q0 - 0.5 + q3*q3
+
+            # Error is sum of cross product between estimated and measured direction of gravity
             halfex = (ay*halfvz - az*halfvy)
             halfey = (az*halfvx - ax*halfvz)
             halfez = (ax*halfvy - ay*halfvx)
             if self.twoKi > 0.0:
                 dt = 1.0 / self.sampleFreq
                 self.integralFB += self.twoKi * np.array([halfex, halfey, halfez]) * dt
-                gx += self.integralFB[0]; gy += self.integralFB[1]; gz += self.integralFB[2]
+                gx += self.integralFB[0]; 
+                gy += self.integralFB[1]; 
+                gz += self.integralFB[2]
             else:
                 self.integralFB[:] = 0.0
+
+            # Apply proportional feedback
             gx += self.twoKp * halfex
             gy += self.twoKp * halfey
             gz += self.twoKp * halfez
-        dt_half = 0.5 * (1.0/self.sampleFreq)
+
         qa,qb,qc = q0,q1,q2
+        """ dt_half = 0.5 * (1.0/self.sampleFreq)
         q0 += (-qb*gx - qc*gy - q3*gz) * dt_half
         q1 += ( qa*gx + qc*gz - q3*gy) * dt_half
         q2 += ( qa*gy - qb*gz + q3*gx) * dt_half
-        q3 += ( qa*gz + qb*gy - qc*gx) * dt_half
+        q3 += ( qa*gz + qb*gy - qc*gx) * dt_half """
+        gx *= 0.5 * (1.0/self.sampleFreq)
+        gy *= 0.5 * (1.0/self.sampleFreq)
+        gz *= 0.5 * (1.0/self.sampleFreq)
+        q0 += (-qb*gx - qc*gy - q3*gz)
+        q1 += ( qa*gx + qc*gz - q3*gy)
+        q2 += ( qa*gy - qb*gz + q3*gx)
+        q3 += ( qa*gz + qb*gy - qc*gx)
+        # Normalise quaternion
         recip = self._inv_sqrt(q0*q0 + q1*q1 + q2*q2 + q3*q3)
         self.q = np.array([q0,q1,q2,q3]) * recip
     def euler_deg(self):

@@ -54,6 +54,7 @@ void sensor_task(void* pv)
 
   for (;;) {
     IMUSample s;
+    s.id = 1;
     if (sensor_read(&s) == 0) {
       // gửi vào queue (không block quá lâu)
       xQueueSend(q, &s, 0);

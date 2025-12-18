@@ -12,6 +12,7 @@ struct __attribute__((packed)) SensorData {
 };
 
 typedef struct {
+  uint8_t id;
   float ax, ay, az;  // in g
   float gx, gy, gz;  // in rad/s
   float dt;          // seconds between samples

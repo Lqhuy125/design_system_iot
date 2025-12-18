@@ -60,6 +60,10 @@ void InitLora(void){
         Serial.println("Check connect before run the program!");
         while (1);
     }
+    else
+    {
+        Serial.println("Connect successfully");
+    }
 }
 
 void RecieveData(void)
