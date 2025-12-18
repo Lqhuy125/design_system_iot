@@ -3,8 +3,14 @@
 QueueHandle_t gPoseQueue, gTransmit;
 TaskHandle_t  hSensor, hTel, hTransmit;
 
+SemaphoreHandle_t gI2CMutex;
+SemaphoreHandle_t gLoraMutex;
+
 void setup() {
   Serial.begin(115200);
+
+  gI2CMutex = xSemaphoreCreateMutex();
+  gLoraMutex = xSemaphoreCreateMutex();
 
   InitLora();
 
@@ -31,7 +37,7 @@ void setup() {
                           &hTel,    
                           1);
 
-  Serial.println("RTOS pipeline started: Sensor->AHRS->Telemetry");
+  Serial.println("RTOS pipeline started: Sensor->Transmit");
 
 }
 
@@ -40,7 +46,7 @@ void loop() {
   // vTaskDelay(pdMS_TO_TICKS(1000));
 
   /* Run without RTOS*/
-  
+  // transmit_without_rtos();
   /* RecieveData(); */
 
 }
@@ -72,3 +78,28 @@ void telemetry_task(void* pv) {
   }
 }
 /* ================================ */
+
+void transmit_without_rtos()
+{
+  IMUSample s;
+  if (sensor_read(&s) == 0)
+  {
+    static uint32_t lastPrint = 0;
+    if (millis() - lastPrint >= 50) {
+      lastPrint = millis();
+
+      lora_send_imusample(s);
+
+      Serial.print("  id: ");  Serial.print(s.id);
+      Serial.print("  ax_n: ");  Serial.print(s.ax, 3);
+      Serial.print("  ay_n: ");  Serial.print(s.ay, 3);
+      Serial.print("  az_n: ");  Serial.print(s.az, 3);
+      Serial.print("  gx: ");  Serial.print(s.gx, 3);
+      Serial.print("  gy: ");  Serial.print(s.gy, 3);
+      Serial.print("  gz: ");  Serial.print(s.gz, 3);
+      Serial.print("  t(ms): "); Serial.println(s.dt * 1000.0f, 2);
+      Serial.print(" time(s): "); Serial.println(s.t_s, 3);
+    } 
+
+  }
+}

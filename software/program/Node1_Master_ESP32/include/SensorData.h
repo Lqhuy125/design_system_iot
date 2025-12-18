@@ -11,7 +11,7 @@ struct __attribute__((packed)) SensorData {
   uint32_t crc;
 };
 
-typedef struct {
+typedef struct __attribute__((packed)) {
   uint8_t id;
   float ax, ay, az;  // in g
   float gx, gy, gz;  // in rad/s

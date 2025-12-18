@@ -4,6 +4,8 @@ Adafruit_MPU6050 mpu;
 
 static uint32_t lastMicros = 0;
 
+extern SemaphoreHandle_t gI2CMutex;
+
 void Init_MPU6050()
 {
     // Try to initialize!
@@ -20,8 +22,11 @@ int sensor_read(IMUSample* out)
 {
   // đọc dữ liệu từ mpu
   /* Get new sensor events with the readings */
+  xSemaphoreTake(gI2CMutex, portMAX_DELAY);
+
   sensors_event_t a, g, temp;
   mpu.getEvent(&a, &g, &temp);
+  xSemaphoreGive(gI2CMutex);
   /* Print out the values */
   const float MS2_TO_G = 1.0f / 9.80665f;
   
