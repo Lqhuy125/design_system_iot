@@ -1,7 +1,7 @@
 #include "main.h"
 
-QueueHandle_t gPoseQueue;
-TaskHandle_t  hSensor, hTel;
+QueueHandle_t gPoseQueue, gTransmit;
+TaskHandle_t  hSensor, hTel, hTransmit;
 
 void setup() {
   Serial.begin(115200);
@@ -19,7 +19,7 @@ void setup() {
   xTaskCreatePinnedToCore(sensor_task,        /* Name of task function  */
                           "SensorTask",       /* Name task */
                           4096,               /* usStackDepth */
-                          (void*)gPoseQueue, 
+                          (void*)gPoseQueue,  /* Queue handler, name Queue to refer */
                           3,                  /* Priority */
                           &hSensor,           /* Task hander */
                           0);                 /* Core ID */
@@ -57,9 +57,7 @@ void telemetry_task(void* pv) {
 
       if (millis() - lastPrint >= 50) {
         lastPrint = millis();
-        /* Serial.print("Roll: ");  Serial.print(o.roll, 2);
-        Serial.print("  Pitch: "); Serial.print(o.pitch, 2);
-        Serial.print("  Yaw: ");   Serial.print(yaw_f, 2); */
+        Serial.print("  id: ");  Serial.print(s.id);
         Serial.print("  ax_n: ");  Serial.print(s.ax, 3);
         Serial.print("  ay_n: ");  Serial.print(s.ay, 3);
         Serial.print("  az_n: ");  Serial.print(s.az, 3);
@@ -67,35 +65,10 @@ void telemetry_task(void* pv) {
         Serial.print("  gy: ");  Serial.print(s.gy, 3);
         Serial.print("  gz: ");  Serial.print(s.gz, 3);
         Serial.print("  t(ms): "); Serial.println(s.dt * 1000.0f, 2);
+
+        Serial.print(" time(s): "); Serial.println(s.t_s, 3);
       }
     }
   }
 }
 /* ================================ */
-
-void read_without_rtos()
-{
-  IMUSample s;
-  if (sensor_read(&s) == 0)
-  {
-    MahonyAHRSGetIMU(&s);
-
-    // Lấy Euler để hiển thị
-    float roll, pitch, yaw;
-    ahrs_get_euler(&roll, &pitch, &yaw);
-
-    static uint32_t lastPrint = 0;
-    if (millis() - lastPrint >= 50) {
-      lastPrint = millis();
-      Serial.print("  Roll: ");  Serial.print(roll, 2);
-      Serial.print("  Pitch: "); Serial.print(pitch, 2);
-      Serial.print("  Yaw: ");   Serial.print(yaw, 2);  
-      Serial.print("  ax: ");    Serial.print(s.ax, 3);
-      Serial.print("  ay: ");    Serial.print(s.ay, 3);
-      Serial.print("  az: ");    Serial.print(s.az, 3);
-
-      Serial.print("  dt(ms): "); Serial.println(s.dt * 1000.0f, 2);
-    } 
-
-  }
-}

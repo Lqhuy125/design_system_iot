@@ -16,5 +16,7 @@ typedef struct {
   float ax, ay, az;  // in g
   float gx, gy, gz;  // in rad/s
   float dt;          // seconds between samples
+  float t_s;  //timestamp
+  uint32_t crc;
 } IMUSample;
 #endif
