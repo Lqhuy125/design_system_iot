@@ -1,7 +1,7 @@
 #include "Custom_Lora.h"
 
 /*  Declare variable */
-SensorData nodeData[MAX_NODES];
+IMUSample nodeData[MAX_NODES];
 
 extern SemaphoreHandle_t gLoraMutex;
 /* General Function */
@@ -57,9 +57,7 @@ void lora_send_imusample(const IMUSample& s) {
   // 4) Gửi qua LoRa
   xSemaphoreTake(gLoraMutex, portMAX_DELAY);
   LoRa.beginPacket();
-
   LoRa.write(buffer, total_len);
-
   LoRa.endPacket();
   xSemaphoreGive(gLoraMutex);
 }
@@ -67,52 +65,52 @@ void lora_send_imusample(const IMUSample& s) {
 static int serializeIMUSample(const IMUSample& s, uint8_t* out) {
   int idx = 0;
 
-  memcpy(&out[idx], &s.id, sizeof(s.id));             idx += sizeof(s.id);
-  memcpy(&out[idx], &s.ax, sizeof(s.ax));             idx += sizeof(s.ax);
-  memcpy(&out[idx], &s.ay, sizeof(s.ay));             idx += sizeof(s.ay);
-  memcpy(&out[idx], &s.az, sizeof(s.az));             idx += sizeof(s.az);
-  memcpy(&out[idx], &s.gx, sizeof(s.gx));             idx += sizeof(s.gx);
-  memcpy(&out[idx], &s.gy, sizeof(s.gy));             idx += sizeof(s.gy);
-  memcpy(&out[idx], &s.gz, sizeof(s.gz));             idx += sizeof(s.gz);
-  memcpy(&out[idx], &s.dt, sizeof(s.dt));             idx += sizeof(s.dt);
-  memcpy(&out[idx], &s.t_s, sizeof(s.t_s));           idx += sizeof(s.t_s);
+  memcpy(&out[idx], &s.id, sizeof(s.id));      idx += sizeof(s.id);
+  memcpy(&out[idx], &s.ax, sizeof(s.ax));      idx += sizeof(s.ax);
+  memcpy(&out[idx], &s.ay, sizeof(s.ay));      idx += sizeof(s.ay);
+  memcpy(&out[idx], &s.az, sizeof(s.az));      idx += sizeof(s.az);
+  memcpy(&out[idx], &s.gx, sizeof(s.gx));      idx += sizeof(s.gx);
+  memcpy(&out[idx], &s.gy, sizeof(s.gy));      idx += sizeof(s.gy);
+  memcpy(&out[idx], &s.gz, sizeof(s.gz));      idx += sizeof(s.gz);
+  memcpy(&out[idx], &s.dt, sizeof(s.dt));      idx += sizeof(s.dt);
+  memcpy(&out[idx], &s.t_s, sizeof(s.t_s));    idx += sizeof(s.t_s);
 
   return idx; // độ dài phần dữ liệu IMUSample (chưa có CRC)
 }
 
 
 /* ========================Start Recieve Data======================== */
-void RecieveData(void)
+void lora_recieve_imusample(IMUSample &s)
 {
     // try to parse packet
     int packetSize = LoRa.parsePacket();
-    if (packetSize == sizeof(SensorData)) {
-        uint8_t buffer[64];
-        int len = 0;
+    if (packetSize == sizeof(IMUSample)) {
+        uint8_t buffer[128];
+        int payload_len = 0;
         // Đọc dữ liệu vào buffer
-        while (len < packetSize && LoRa.available()) {
-            buffer[len++] = (uint8_t)LoRa.read();
+        while (payload_len < packetSize && LoRa.available()) {
+            buffer[payload_len++] = (uint8_t)LoRa.read();
         }
 
-        SensorData received;
-        deserializeSensorData(received, buffer);
+        IMUSample s_recieved;
+        deserializeIMUSample(s_recieved, buffer);
 
         // in ra kết quả
         /* printSensorData_RECIEVE(received); */
 
         // check CRC
-        uint32_t calc = calcCRC32(&received, sizeof(SensorData) - sizeof(received.crc));
-        if (calc == received.crc) {
+        uint32_t calc_crc = calcCRC32(&buffer, sizeof(IMUSample) - sizeof(s_recieved.crc));
+        if (calc_crc == s_recieved.crc) {
             Serial.println("✅ CRC OK");
             /* printSensorData_RECIEVE(received); */
-            publishNodeData(received);
+            publishNodeData(s_recieved);
 
             // lưu dữ liệu theo node ID
-            if (received.id > 0 && received.id <= MAX_NODES) {
-                nodeData[received.id - 1] = received;
-                Serial.print("===>>>Saved data for Node "); Serial.println(received.id);
+            if (s_recieved.id > 0 && s_recieved.id <= MAX_NODES) {
+                nodeData[s_recieved.id - 1] = s_recieved;
+                Serial.print("===>>>Saved data for Node "); Serial.println(s_recieved.id);
             } else {
-                Serial.print("⚠️ Unknown Node ID: "); Serial.println(received.id);
+                Serial.print("⚠️ Unknown Node ID: "); Serial.println(s_recieved.id);
             }
 
         } else {
@@ -132,18 +130,19 @@ void RecieveData(void)
         
 }
 
-static void deserializeSensorData(SensorData &d, const uint8_t *buffer) {
+static int deserializeIMUSample(IMUSample& s, const uint8_t *buffer) {
   int idx = 0;
 
-  memcpy(&d.id, &buffer[idx], sizeof(d.id)); idx += sizeof(d.id);
-  memcpy(&d.accX, &buffer[idx], sizeof(d.accX)); idx += sizeof(d.accX);
-  memcpy(&d.accY, &buffer[idx], sizeof(d.accY)); idx += sizeof(d.accY);
-  memcpy(&d.accZ, &buffer[idx], sizeof(d.accZ)); idx += sizeof(d.accZ);
-  memcpy(&d.gyroX, &buffer[idx], sizeof(d.gyroX)); idx += sizeof(d.gyroX);
-  memcpy(&d.gyroY, &buffer[idx], sizeof(d.gyroY)); idx += sizeof(d.gyroY);
-  memcpy(&d.gyroZ, &buffer[idx], sizeof(d.gyroZ)); idx += sizeof(d.gyroZ);
-  memcpy(&d.temperature, &buffer[idx], sizeof(d.temperature)); idx += sizeof(d.temperature);
-  memcpy(&d.crc, &buffer[idx], sizeof(d.crc)); idx += sizeof(d.crc);
+  memcpy(&s.id, &buffer[idx], sizeof(s.id));        idx += sizeof(s.id);
+  memcpy(&s.ax, &buffer[idx], sizeof(s.ax));    idx += sizeof(s.ax);
+  memcpy(&s.ay, &buffer[idx], sizeof(s.ay));    idx += sizeof(s.ay);
+  memcpy(&s.az, &buffer[idx], sizeof(s.az));    idx += sizeof(s.az);
+  memcpy(&s.gx, &buffer[idx], sizeof(s.gx));  idx += sizeof(s.gx);
+  memcpy(&s.gy, &buffer[idx], sizeof(s.gy));  idx += sizeof(s.gy);
+  memcpy(&s.gz, &buffer[idx], sizeof(s.gz));  idx += sizeof(s.gz);
+  memcpy(&s.crc, &buffer[idx], sizeof(s.crc));      idx += sizeof(s.crc);
+
+  return idx;
 }
 
 /* ========================End Recieve Data======================== */

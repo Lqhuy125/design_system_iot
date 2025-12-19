@@ -24,8 +24,8 @@ void lora_send_imusample(const IMUSample& s);
 static int serializeIMUSample(const IMUSample& s, uint8_t* out);
 
 /* Recieve Lora */
-void RecieveData(void);
+void lora_recieve_imusample(IMUSample &s);
 extern void publishNodeData(const SensorData &d);
-static void deserializeSensorData(SensorData &d, const uint8_t *buffer);
+static int deserializeIMUSample(IMUSample& s, const uint8_t *buffer);
 
 #endif

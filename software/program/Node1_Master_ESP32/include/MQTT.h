@@ -13,7 +13,7 @@ void Init_Connection(void);
 
 void callback(char* topic, byte* payload, unsigned int length);
 
-void publishNodeData(const SensorData &d);
+void publishNodeData(const IMUSample &d);
 
 void reconnect();
 
