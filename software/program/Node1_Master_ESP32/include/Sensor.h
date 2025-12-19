@@ -1,6 +1,7 @@
 #ifndef _SENSOR_H
 #define _SENSOR_H
 
+#include "main.h"
 #include <stdio.h>
 #include "SensorData.h"
 #include <Adafruit_MPU6050.h>
