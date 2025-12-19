@@ -16,6 +16,10 @@
 		},
 		{
 			"path": "../../.."
+		},
+		{
+			"name": "Recieve_Node_ESP32_Lora",
+			"path": "Recieve_Node_ESP32_Lora"
 		}
 	],
 	"settings": {

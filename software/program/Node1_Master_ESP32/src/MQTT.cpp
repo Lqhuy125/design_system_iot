@@ -33,7 +33,7 @@ void Init_Connection()
     
 }
 
-void publishNodeData(const SensorData &d) {
+void publishNodeData(const IMUSample &d) {
     char topic[64];
     char payload[32];
 
@@ -41,31 +41,27 @@ void publishNodeData(const SensorData &d) {
 
     // Node name theo ID (node1, node2, ...)
     snprintf(topic, sizeof(topic), "bridge/node%d/acc/x", d.id);
-    dtostrf(d.accX, 6, 2, payload);
+    dtostrf(d.ax, 6, 2, payload);
     client.publish(topic, payload);
 
     snprintf(topic, sizeof(topic), "bridge/node%d/acc/y", d.id);
-    dtostrf(d.accY, 6, 2, payload);
+    dtostrf(d.ay, 6, 2, payload);
     client.publish(topic, payload);
 
     snprintf(topic, sizeof(topic), "bridge/node%d/acc/z", d.id);
-    dtostrf(d.accZ, 6, 2, payload);
+    dtostrf(d.az, 6, 2, payload);
     client.publish(topic, payload);
 
     snprintf(topic, sizeof(topic), "bridge/node%d/gyro/x", d.id);
-    dtostrf(d.gyroX, 6, 2, payload);
+    dtostrf(d.gx, 6, 2, payload);
     client.publish(topic, payload);
 
     snprintf(topic, sizeof(topic), "bridge/node%d/gyro/y", d.id);
-    dtostrf(d.gyroY, 6, 2, payload);
+    dtostrf(d.gy, 6, 2, payload);
     client.publish(topic, payload);
 
     snprintf(topic, sizeof(topic), "bridge/node%d/gyro/z", d.id);
-    dtostrf(d.gyroZ, 6, 2, payload);
-    client.publish(topic, payload);
-
-    snprintf(topic, sizeof(topic), "bridge/node%d/tmpture", d.id);
-    dtostrf(d.temperature, 6, 2, payload);
+    dtostrf(d.gz, 6, 2, payload);
     client.publish(topic, payload);
 
     Serial.print("===>>>Published data for Node "); 
