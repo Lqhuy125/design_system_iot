@@ -40,7 +40,7 @@ void InitLora(void)
 }
 
 /* Send Data */
-void lora_send_imusample(const IMUSample& s) {
+void lora_send_imusample(const IMUSample& s, const SensorData &data) {
   uint8_t buffer[128];  // đủ lớn cho IMUSample + CRC
 
   // 1) serialize IMUSample
@@ -53,12 +53,17 @@ void lora_send_imusample(const IMUSample& s) {
   memcpy(&buffer[payload_len], &crc, sizeof(crc));
   int total_len = payload_len + sizeof(crc);
 
-
+    uint8_t buffer1[64]; // đủ lớn
+  int len = serializeSensorData(data, buffer1);
   // 4) Gửi qua LoRa
   xSemaphoreTake(gLoraMutex, portMAX_DELAY);
   LoRa.beginPacket();
-  LoRa.write(buffer, total_len);
+
+  LoRa.write(buffer1, total_len);
+
   LoRa.endPacket();
+  Serial.print(len);
+  Serial.print("Send done");
   xSemaphoreGive(gLoraMutex);
 }
 
@@ -146,3 +151,33 @@ static int deserializeIMUSample(IMUSample& s, const uint8_t *buffer) {
 }
 
 /* ========================End Recieve Data======================== */
+
+void SenData(const SensorData &data)
+{
+  uint8_t buffer[64]; // đủ lớn
+  int len = serializeSensorData(data, buffer);
+
+  LoRa.beginPacket();
+  LoRa.write(buffer, len);
+  LoRa.endPacket();
+}
+
+int serializeSensorData(const SensorData &d, uint8_t *buffer) {
+  int idx = 0;
+
+  memcpy(&buffer[idx], &d.id, sizeof(d.id)); idx += sizeof(d.id);
+  memcpy(&buffer[idx], &d.accX, sizeof(d.accX)); idx += sizeof(d.accX);
+  memcpy(&buffer[idx], &d.accY, sizeof(d.accY)); idx += sizeof(d.accY);
+  memcpy(&buffer[idx], &d.accZ, sizeof(d.accZ)); idx += sizeof(d.accZ);
+  memcpy(&buffer[idx], &d.gyroX, sizeof(d.gyroX)); idx += sizeof(d.gyroX);
+  memcpy(&buffer[idx], &d.gyroY, sizeof(d.gyroY)); idx += sizeof(d.gyroY);
+  memcpy(&buffer[idx], &d.gyroZ, sizeof(d.gyroZ)); idx += sizeof(d.gyroZ);
+  memcpy(&buffer[idx], &d.temperature, sizeof(d.temperature)); idx += sizeof(d.temperature);
+  memcpy(&buffer[idx], &d.crc, sizeof(d.crc)); idx += sizeof(d.crc);
+
+  for (int i=0; i<sizeof(SensorData); i++) {
+      Serial.print(buffer[i], HEX); Serial.print(" ");
+  }
+  Serial.println();
+  return idx; // tổng số byte
+}
