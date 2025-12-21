@@ -22,13 +22,13 @@ void setup() {
   gPoseQueue = xQueueCreate(/*length=*/128, sizeof(IMUSample));
 
   /* reate tasks, pin to cores (ESP32: core 0 & 1) */
-  xTaskCreatePinnedToCore(sensor_task,        /* Name of task function  */
-                          "SensorTask",       /* Name task */
-                          4096,               /* usStackDepth */
-                          (void*)gPoseQueue,  /* Queue handler, name Queue to refer */
-                          3,                  /* Priority */
-                          &hSensor,           /* Task hander */
-                          0);                 /* Core ID */
+  // xTaskCreatePinnedToCore(sensor_task,        /* Name of task function  */
+  //                         "SensorTask",       /* Name task */
+  //                         4096,               /* usStackDepth */
+  //                         (void*)gPoseQueue,  /* Queue handler, name Queue to refer */
+  //                         3,                  /* Priority */
+  //                         &hSensor,           /* Task hander */
+  //                         0);                 /* Core ID */
   // xTaskCreatePinnedToCore(telemetry_task,
   //                         "TelemetryTask",
   //                         4096, 

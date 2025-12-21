@@ -26,4 +26,7 @@ static int deserializeIMUSample(IMUSample& s, const uint8_t *buffer);
 
 void SenData(const SensorData &data);
 int serializeSensorData(const SensorData &d, uint8_t *buffer);
+
+void lora_dump_config();
+static long mapBW(uint8_t bwBits);
 #endif

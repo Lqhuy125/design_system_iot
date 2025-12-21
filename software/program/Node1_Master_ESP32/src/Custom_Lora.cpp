@@ -26,7 +26,7 @@ void InitLora(void)
 {
     Serial.println("LoRa Receiver");
     LoRa.setPins(ss, rst, dio0);
-    
+
     if (!LoRa.begin(433E6)) {
         Serial.println("Starting LoRa failed!");
         Serial.println("Check connect before run the program!");
@@ -36,7 +36,16 @@ void InitLora(void)
     {
         Serial.println("Connect successfully");
     }
-    LoRa.setSyncWord(0xA5);
+    // LoRa.setFrequency(433E6);
+
+    // Đọc lại FRF để verify
+    uint32_t frf =
+        ((uint32_t)LoRa.readRegister(0x06) << 16) |
+        ((uint32_t)LoRa.readRegister(0x07) <<  8) |
+        ((uint32_t)LoRa.readRegister(0x08) <<  0);
+
+    double freqHz = frf * 61.03515625; // 32MHz / 2^19
+    Serial.printf("[VERIFY] FRF=0x%06lX -> %.0f Hz\n", (unsigned long)frf, freqHz);
 }
 
 /* Send Data */
@@ -56,15 +65,19 @@ void lora_send_imusample(const IMUSample& s, const SensorData &data) {
     uint8_t buffer1[64]; // đủ lớn
   int len = serializeSensorData(data, buffer1);
   // 4) Gửi qua LoRa
-  xSemaphoreTake(gLoraMutex, portMAX_DELAY);
+//   xSemaphoreTake(gLoraMutex, portMAX_DELAY);
+
   LoRa.beginPacket();
 
-  LoRa.write(buffer1, total_len);
-
+  LoRa.write(buffer1, len);
   LoRa.endPacket();
-  Serial.print(len);
-  Serial.print("Send done");
-  xSemaphoreGive(gLoraMutex);
+  
+    uint8_t op = LoRa.readRegister(0x01);
+    Serial.printf("[STATE] OpMode=0x%02X\n", op);
+
+  
+  lora_dump_config();
+//   xSemaphoreGive(gLoraMutex);
 }
 
 static int serializeIMUSample(const IMUSample& s, uint8_t* out) {
@@ -180,4 +193,62 @@ int serializeSensorData(const SensorData &d, uint8_t *buffer) {
   }
   Serial.println();
   return idx; // tổng số byte
+}
+
+
+static long mapBW(uint8_t bwBits) {
+  switch (bwBits) {
+    case 0x00: return 7800;   // 7.8 kHz
+    case 0x01: return 10400;  // 10.4 kHz
+    case 0x02: return 15600;  // 15.6 kHz
+    case 0x03: return 20800;  // 20.8 kHz
+    case 0x04: return 31250;  // 31.25 kHz
+    case 0x05: return 41700;  // 41.7 kHz
+    case 0x06: return 62500;  // 62.5 kHz
+    case 0x07: return 125000; // 125 kHz
+    case 0x08: return 250000; // 250 kHz
+    case 0x09: return 500000; // 500 kHz
+    default:   return -1;
+  }
+}
+
+void lora_dump_config() {
+  // Đọc tần số: RegFrfMsb/Mid/Lsb (0x06..0x08)
+  uint32_t frf =
+    ((uint32_t)LoRa.readRegister(0x06) << 16) |
+    ((uint32_t)LoRa.readRegister(0x07) <<  8) |
+    ((uint32_t)LoRa.readRegister(0x08) <<  0);
+  // f = frf * (32e6 / 2^19) ≈ frf * 61.03515625 Hz
+  double freqHz = frf * 61.03515625;
+
+  uint8_t opmode   = LoRa.readRegister(0x01); // check LORA mode & mode RX/TX
+  uint8_t modem1   = LoRa.readRegister(0x1D);
+  uint8_t modem2   = LoRa.readRegister(0x1E);
+  uint8_t modem3   = LoRa.readRegister(0x26);
+  uint8_t syncWord = LoRa.readRegister(0x39);
+  uint8_t preMsb   = LoRa.readRegister(0x20);
+  uint8_t preLsb   = LoRa.readRegister(0x21);
+  uint16_t preamble= ((uint16_t)preMsb << 8) | preLsb;
+
+  // Giải mã
+  uint8_t bwBits   = (modem1 >> 4) & 0x0F;
+  long    bwHz     = mapBW(bwBits);
+  uint8_t crBits   = (modem1 >> 1) & 0x07; // 001 -> 4/5, 010->4/6, 011->4/7, 100->4/8
+  int crDen        = 4 + crBits;          // để in 4/5..4/8
+  bool   implHdr   = modem1 & 0x01;       // 1 = implicit header
+
+  uint8_t sf       = (modem2 >> 4) & 0x0F; // 6..12
+  bool   rxCrcOn   = modem2 & 0x04;        // CRC on at PHY
+  bool   lowDRopt  = modem3 & 0x08;        // LowDataRateOptimize
+
+  Serial.println(F("---- SX127x CONFIG DUMP ----"));
+  Serial.printf(" OpMode: 0x%02X (should have LoRa bit set)\n", opmode);
+  Serial.printf(" Freq: %.0f Hz (FRF=0x%06lX)\n", freqHz, (unsigned long)frf);
+  Serial.printf(" SyncWord: 0x%02X\n", syncWord);
+  Serial.printf(" BW: %ld Hz, SF: %u, CR: 4/%d\n", bwHz, sf, crDen);
+  Serial.printf(" Header: %s\n", implHdr ? "Implicit" : "Explicit");
+  Serial.printf(" PHY CRC: %s\n", rxCrcOn ? "Enabled" : "Disabled");
+  Serial.printf(" Preamble: %u symbols\n", preamble);
+  Serial.printf(" LowDataRateOptimize: %s\n", lowDRopt ? "ON" : "OFF");
+  Serial.println(F("---------------------------"));
 }
