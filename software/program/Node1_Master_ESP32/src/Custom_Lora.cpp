@@ -37,15 +37,8 @@ void InitLora(void)
         Serial.println("Connect successfully");
     }
     // LoRa.setFrequency(433E6);
-
+    LoRa.setSyncWord(0xA5);
     // Đọc lại FRF để verify
-    uint32_t frf =
-        ((uint32_t)LoRa.readRegister(0x06) << 16) |
-        ((uint32_t)LoRa.readRegister(0x07) <<  8) |
-        ((uint32_t)LoRa.readRegister(0x08) <<  0);
-
-    double freqHz = frf * 61.03515625; // 32MHz / 2^19
-    Serial.printf("[VERIFY] FRF=0x%06lX -> %.0f Hz\n", (unsigned long)frf, freqHz);
 }
 
 /* Send Data */
@@ -66,7 +59,7 @@ void lora_send_imusample(const IMUSample& s, const SensorData &data) {
   int len = serializeSensorData(data, buffer1);
   // 4) Gửi qua LoRa
 //   xSemaphoreTake(gLoraMutex, portMAX_DELAY);
-
+    lora_dump_config();
   LoRa.beginPacket();
 
   LoRa.write(buffer1, len);

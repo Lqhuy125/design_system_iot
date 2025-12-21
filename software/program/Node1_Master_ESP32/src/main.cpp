@@ -6,6 +6,8 @@ TaskHandle_t  hSensor, hTel, hTransmit;
 SemaphoreHandle_t gI2CMutex;
 SemaphoreHandle_t gLoraMutex;
 
+int counter = 0;
+
 void setup() {
   Serial.begin(115200);
 
@@ -47,6 +49,17 @@ void loop() {
   
   /* Run without RTOS*/
   transmit_without_rtos();
+    // Serial.print("Sending packet: ");
+    // Serial.println(counter);
+
+    // LoRa.beginPacket();   //Send LoRa packet to receiver
+    // LoRa.print("hello ");
+    // LoRa.print(counter);
+    // LoRa.endPacket();
+
+    // counter++;
+
+    // delay(500);
   /* RecieveData(); */
 
 }
