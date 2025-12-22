@@ -15,6 +15,14 @@
 			"path": "Node4_Slave_Lora_MPU_Stm32f103"
 		},
 		{
+			"name": "ESP_Sender",
+			"path": "ESP_Sender"
+		},
+		{
+			"name": "ESP_Reciever",
+			"path": "ESP_Reciever"
+		},
+		{
 			"path": "../../.."
 		},
 		{
