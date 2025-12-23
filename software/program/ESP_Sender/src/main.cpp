@@ -1,110 +1,107 @@
-#include "Arduino.h"
-/*
-  RadioLib SX127x Blocking Transmit Example
+#include "main.h"
 
-  This example transmits packets using SX1278 LoRa radio module.
-  Each packet contains up to 255 bytes of data, in the form of:
-  - Arduino String
-  - null-terminated char array (C-string)
-  - arbitrary binary data (byte array)
+QueueHandle_t gTransmit;
+TaskHandle_t  hSensor, hTransmit;
 
-  Other modules from SX127x/RFM9x family can also be used.
-
-  Using blocking transmit is not recommended, as it will lead
-  to inefficient use of processor time!
-  Instead, interrupt transmit is recommended.
-
-  For default module settings, see the wiki page
-  https://github.com/jgromes/RadioLib/wiki/Default-configuration#sx127xrfm9x---lora-modem
-
-  For full API reference, see the GitHub Pages
-  https://jgromes.github.io/RadioLib/
-*/
-
-// include the library
-#include <RadioLib.h>
-
-// SX1278 has the following connections:
-// NSS pin:   10-5
-// DIO0 pin:  2
-// RESET pin: 9-14
-// DIO1 pin:  3
-SX1278 radio = new Module(5, 2, 14);
-
-// or detect the pinout automatically using RadioBoards
-// https://github.com/radiolib-org/RadioBoards
-/*
-#define RADIO_BOARD_AUTO
-#include <RadioBoards.h>
-Radio radio = new RadioModule();
-*/
+SemaphoreHandle_t gI2CMutex;
+SemaphoreHandle_t gLoraMutex;
 
 void setup() {
   Serial.begin(9600);
 
-  // initialize SX1278 with default settings
-  Serial.print(F("[SX1278] Initializing ... "));
-  int state = radio.begin();
-  if (state == RADIOLIB_ERR_NONE) {
-    Serial.println(F("success!"));
-  } else {
-    Serial.print(F("failed, code "));
-    Serial.println(state);
-    while (true) { delay(10); }
-  }
+  gI2CMutex = xSemaphoreCreateMutex();
+  gLoraMutex = xSemaphoreCreateMutex();
 
-  // some modules have an external RF switch
-  // controlled via two pins (RX enable, TX enable)
-  // to enable automatic control of the switch,
-  // call the following method
-  // RX enable:   4
-  // TX enable:   5
-  /*
-    radio.setRfSwitchPins(4, 5);
-  */
+  InitLora();
+
+  /* Init_Connection(); */
+  
+  Init_MPU6050();
+
+  /* Create queues */
+  gTransmit = xQueueCreate(/*length=*/128, sizeof(IMUSample));
+
+  /* reate tasks, pin to cores (ESP32: core 0 & 1) */
+  xTaskCreatePinnedToCore(sensor_task,        /* Name of task function  */
+                          "SensorTask",       /* Name task */
+                          4096,               /* usStackDepth */
+                          (void*)gTransmit,  /* Queue handler, name Queue to refer */
+                          3,                  /* Priority */
+                          &hSensor,           /* Task hander */
+                          0);                 /* Core ID */
+  xTaskCreatePinnedToCore(transmit_task,
+                          "TransmitTask",
+                          4096, 
+                          nullptr,          
+                          1, 
+                          &hTransmit,    
+                          1);
+
+  Serial.println("RTOS pipeline started: Sensor->Transmit");
 }
 
-// counter to keep track of transmitted packets
-int count = 0;
-
 void loop() {
-  Serial.print(F("[SX1278] Transmitting packet ... "));
+  // RTOS tasks chạy riêng; loop() có thể để trống
+  // vTaskDelay(pdMS_TO_TICKS(1000));
+  
+  /* Run without RTOS*/
+  // transmit_without_rtos();
 
-  // you can transmit C-string or Arduino string up to
-  // 255 characters long
-  String str = "Hello World! #" + String(count++);
-  int state = radio.transmit(str);
+  /* RecieveData(); */
+}
+/* 
+    =========== Task on freeRTOS ============
+*/
 
-  // you can also transmit byte array up to 256 bytes long
-  /*
-    byte byteArr[] = {0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF};
-    int state = radio.transmit(byteArr, 8);
-  */
+void transmit_task(void* pv) {
+  (void)pv;
+  IMUSample s;
+  uint32_t lastPrint = 0;
+  for (;;) {
+    if (xQueueReceive(gTransmit, &s, portMAX_DELAY) == pdTRUE) {
 
-  if (state == RADIOLIB_ERR_NONE) {
-    // the packet was successfully transmitted
-    Serial.println(F(" success!"));
+      if (millis() - lastPrint >= 50) {
+        lastPrint = millis();
 
-    // print measured data rate
-    Serial.print(F("[SX1278] Datarate:\t"));
-    Serial.print(radio.getDataRate());
-    Serial.println(F(" bps"));
+        lora_send_imusample(s);
+        Serial.print("  id: ");  Serial.print(s.id);
+        Serial.print("  ax_n: ");  Serial.print(s.ax, 3);
+        Serial.print("  ay_n: ");  Serial.print(s.ay, 3);
+        Serial.print("  az_n: ");  Serial.print(s.az, 3);
+        Serial.print("  gx: ");  Serial.print(s.gx, 3);
+        Serial.print("  gy: ");  Serial.print(s.gy, 3);
+        Serial.print("  gz: ");  Serial.print(s.gz, 3);
+        Serial.print("  t(ms): "); Serial.println(s.dt * 1000.0f, 2);
 
-  } else if (state == RADIOLIB_ERR_PACKET_TOO_LONG) {
-    // the supplied packet was longer than 256 bytes
-    Serial.println(F("too long!"));
+        Serial.print(" time(s): "); Serial.println(s.t_s, 3);
+      }
+    }
+  }
+}
+/* ================================ */
 
-  } else if (state == RADIOLIB_ERR_TX_TIMEOUT) {
-    // timeout occurred while transmitting packet
-    Serial.println(F("timeout!"));
+void transmit_without_rtos()
+{
+  IMUSample s;
 
-  } else {
-    // some other error occurred
-    Serial.print(F("failed, code "));
-    Serial.println(state);
+  if (sensor_read(&s) == 0)
+  {
+    static uint32_t lastPrint = 0;
+    if (millis() - lastPrint >= 500) {
+      lastPrint = millis();
+
+      // lora_send_imusample(s);
+
+      Serial.print("  id: ");  Serial.print(s.id);
+      Serial.print("  ax_n: ");  Serial.print(s.ax, 3);
+      Serial.print("  ay_n: ");  Serial.print(s.ay, 3);
+      Serial.print("  az_n: ");  Serial.print(s.az, 3);
+      Serial.print("  gx: ");  Serial.print(s.gx, 3);
+      Serial.print("  gy: ");  Serial.print(s.gy, 3);
+      Serial.print("  gz: ");  Serial.print(s.gz, 3);
+      Serial.print("  t(ms): "); Serial.println(s.dt * 1000.0f, 2);
+      Serial.print(" time(s): "); Serial.println(s.t_s, 3);
+    } 
 
   }
-
-  // wait for a second before transmitting again
-  delay(1000);
 }
