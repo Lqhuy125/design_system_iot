@@ -6,6 +6,8 @@ SX1278 radio = new Module(ss, dio0, rst);
 IMUSample nodeData[MAX_NODES];
 
 extern SemaphoreHandle_t gLoraMutex;
+
+extern QueueHandle_t gRxQueue;
 /* General Function */
 static inline uint32_t calcCRC32(const void *data, size_t length) {
     const uint8_t *bytes = (const uint8_t*)data;
@@ -52,9 +54,9 @@ void lora_send_imusample(const IMUSample& s) {
   memcpy(&buffer[payload_len], &crc, sizeof(crc));
   int total_len = payload_len + sizeof(crc);
 
-  for (int i=0; i<sizeof(IMUSample); i++) {
+  /* for (int i=0; i<sizeof(IMUSample); i++) {
       Serial.print(buffer[i], HEX); Serial.print(" ");
-  }
+  } */
   // 4) Gửi qua LoRa
   xSemaphoreTake(gLoraMutex, portMAX_DELAY);
   Serial.println(F("[SX1278] Transmitting packet ... "));
@@ -107,98 +109,69 @@ static int serializeIMUSample(const IMUSample& s, uint8_t* out) {
 
 
 /* ========================Start Recieve Data======================== */
-void lora_recieve_imusample(IMUSample &s)
-{
-    uint8_t buffer[128];
-    int state;
-    // state = radio.receive(buffer);
-    if (state == RADIOLIB_ERR_NONE) {
-    // packet was successfully received
-    Serial.println(F("success!"));
 
-    // print the data of the packet
-    Serial.print(F("[SX1278] Data:\t\t\t"));
+bool lora_receive_once(IMUSample &out) {
+  uint8_t buf[IMU_TOTAL_LEN];
+  // RadioLib blocking receive theo độ dài kỳ vọng:
+  // Nếu firmware của bạn dùng API receive(buffer, len) – dùng dòng sau:
+  int state = radio.receive(buf, IMU_TOTAL_LEN);
 
-    IMUSample s_recieved;
-    deserializeIMUSample(s_recieved, buffer);
-
-    // check CRC
-    uint32_t calc_crc = calcCRC32(&buffer, sizeof(IMUSample) - sizeof(s_recieved.crc));
-    if (calc_crc == s_recieved.crc) {
-        Serial.println("✅ CRC OK");
-        /* printSensorData_RECIEVE(received); */
-        publishNodeData(s_recieved);
-
-        // lưu dữ liệu theo node ID
-        if (s_recieved.id > 0 && s_recieved.id <= MAX_NODES) {
-            nodeData[s_recieved.id - 1] = s_recieved;
-            Serial.print("===>>>Saved data for Node "); Serial.println(s_recieved.id);
-        } else {
-            Serial.print("⚠️ Unknown Node ID: "); Serial.println(s_recieved.id);
-        }
-
-    } else {
-        Serial.println("❌ CRC ERROR");
+  if (state == RADIOLIB_ERR_NONE) {
+    // Tách CRC nhận
+    uint32_t recv_crc;
+    memcpy(&recv_crc, &buf[IMU_PAYLOAD_LEN], sizeof(recv_crc));
+    uint32_t calc_crc = calcCRC32(buf, IMU_PAYLOAD_LEN);
+    if (calc_crc != recv_crc) {
+      Serial.println(F("❌ CRC ERROR (IMU)"));
+      for (int i=0; i<sizeof(IMUSample); i++) {
+          Serial.print(buf[i], HEX); Serial.print(" ");
+      }
+      Serial.println(" ");
+      return false;
     }
 
-    // debug raw bytes
-    /* for (int i=0; i<sizeof(IMUSample); i++) {
-        Serial.print(buffer[i], HEX); Serial.print(" ");
-    } 
-    Serial.println(); */
+    // Giải IMUSample đúng thứ tự serializeIMUSample()
+    int idx = 0;
+    memcpy(&out.id, &buf[idx], sizeof(out.id)); idx += sizeof(out.id);
+    memcpy(&out.ax, &buf[idx], sizeof(out.ax)); idx += sizeof(out.ax);
+    memcpy(&out.ay, &buf[idx], sizeof(out.ay)); idx += sizeof(out.ay);
+    memcpy(&out.az, &buf[idx], sizeof(out.az)); idx += sizeof(out.az);
+    memcpy(&out.gx, &buf[idx], sizeof(out.gx)); idx += sizeof(out.gx);
+    memcpy(&out.gy, &buf[idx], sizeof(out.gy)); idx += sizeof(out.gy);
+    memcpy(&out.gz, &buf[idx], sizeof(out.gz)); idx += sizeof(out.gz);
+    memcpy(&out.dt, &buf[idx], sizeof(out.dt)); idx += sizeof(out.dt);
+    memcpy(&out.t_s, &buf[idx], sizeof(out.t_s)); idx += sizeof(out.t_s);
+    out.crc = recv_crc;   // lưu lại CRC ứng dụng nếu struct có trường crc
 
-    // print the RSSI (Received Signal Strength Indicator)
-    // of the last received packet
-    Serial.print(F("[SX1278] RSSI:\t\t\t"));
-    Serial.print(radio.getRSSI());
-    Serial.println(F(" dBm"));
+    // (tuỳ chọn) in RSSI/SNR
+    Serial.printf("[SX1278] RX OK size=%d RSSI=%d SNR=%.1f\n",
+                  IMU_TOTAL_LEN, radio.getRSSI(), radio.getSNR());
 
-    // print the SNR (Signal-to-Noise Ratio)
-    // of the last received packet
-    Serial.print(F("[SX1278] SNR:\t\t\t"));
-    Serial.print(radio.getSNR());
-    Serial.println(F(" dB"));
-
-    // print frequency error
-    // of the last received packet
-    Serial.print(F("[SX1278] Frequency error:\t"));
-    Serial.print(radio.getFrequencyError());
-    Serial.println(F(" Hz"));
-
+    return true;
   } else if (state == RADIOLIB_ERR_RX_TIMEOUT) {
-    // timeout occurred while waiting for a packet
-    Serial.println(F("timeout!"));
-
+    // Không có gói trong window – normal
+    return false;
   } else if (state == RADIOLIB_ERR_CRC_MISMATCH) {
-    // packet was received, but is malformed
-    Serial.println(F("CRC error!"));
-
+    Serial.println(F("CRC error (PHY)"));
+    return false;
   } else {
-    // some other error occurred
-    Serial.print(F("failed, code "));
-    Serial.println(state);
-
+    Serial.print(F("RX failed, code ")); Serial.println(state);
+    return false;
   }
 }
 
-static int deserializeIMUSample(IMUSample& s, const uint8_t *buffer) {
-  int idx = 0;
 
-  memcpy(&s.id, &buffer[idx], sizeof(s.id));        idx += sizeof(s.id);
-  memcpy(&s.ax, &buffer[idx], sizeof(s.ax));    idx += sizeof(s.ax);
-  memcpy(&s.ay, &buffer[idx], sizeof(s.ay));    idx += sizeof(s.ay);
-  memcpy(&s.az, &buffer[idx], sizeof(s.az));    idx += sizeof(s.az);
-  memcpy(&s.gx, &buffer[idx], sizeof(s.gx));  idx += sizeof(s.gx);
-  memcpy(&s.gy, &buffer[idx], sizeof(s.gy));  idx += sizeof(s.gy);
-  memcpy(&s.gz, &buffer[idx], sizeof(s.gz));  idx += sizeof(s.gz);
-  memcpy(&s.dt, &buffer[idx], sizeof(s.dt));      idx += sizeof(s.dt);
-  memcpy(&s.t_s, &buffer[idx], sizeof(s.t_s));    idx += sizeof(s.t_s);
-  memcpy(&s.crc, &buffer[idx], sizeof(s.crc));      idx += sizeof(s.crc);
-
-  for (int i=0; i<sizeof(IMUSample); i++) {
-      Serial.print(buffer[i], HEX); Serial.print(" ");
+void lora_rx_task(void* pv) {
+  (void)pv;
+  for (;;) {
+    IMUSample s;
+    if (lora_receive_once(s)) {
+      if (xQueueSend(gRxQueue, &s, 0) != pdTRUE) {
+        Serial.println("⚠️ gRxQueue full, drop sample");
+      }
+    }
+    vTaskDelay(pdMS_TO_TICKS(5));
   }
-  return idx;
 }
 
 /* ========================End Recieve Data======================== */
