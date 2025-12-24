@@ -16,7 +16,7 @@
 #define dio0 2
 
 
-static const int IMU_PAYLOAD_LEN = 36;               // id + ax..gz + dt + t_s
+static const int IMU_PAYLOAD_LEN = 33;               // id + ax..gz + dt + t_s
 static const int IMU_TOTAL_LEN   = IMU_PAYLOAD_LEN + sizeof(uint32_t); // + CRC32 = 40
 
 

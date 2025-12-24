@@ -144,8 +144,8 @@ bool lora_receive_once(IMUSample &out) {
     out.crc = recv_crc;   // lưu lại CRC ứng dụng nếu struct có trường crc
 
     // (tuỳ chọn) in RSSI/SNR
-    Serial.printf("[SX1278] RX OK size=%d RSSI=%d SNR=%.1f\n",
-                  IMU_TOTAL_LEN, radio.getRSSI(), radio.getSNR());
+    // Serial.printf("[SX1278] RX OK size=%d RSSI=%d SNR=%.1f\n",
+    //               IMU_TOTAL_LEN, radio.getRSSI(), radio.getSNR());
 
     return true;
   } else if (state == RADIOLIB_ERR_RX_TIMEOUT) {

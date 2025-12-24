@@ -109,76 +109,7 @@ static int serializeIMUSample(const IMUSample& s, uint8_t* out) {
 /* ========================Start Recieve Data======================== */
 void lora_recieve_imusample(IMUSample &s)
 {
-    uint8_t buffer[128];
-    int state;
-    // state = radio.receive(buffer);
-    if (state == RADIOLIB_ERR_NONE) {
-    // packet was successfully received
-    Serial.println(F("success!"));
-
-    // print the data of the packet
-    Serial.print(F("[SX1278] Data:\t\t\t"));
-
-    IMUSample s_recieved;
-    deserializeIMUSample(s_recieved, buffer);
-
-    // check CRC
-    uint32_t calc_crc = calcCRC32(&buffer, sizeof(IMUSample) - sizeof(s_recieved.crc));
-    if (calc_crc == s_recieved.crc) {
-        Serial.println("✅ CRC OK");
-        /* printSensorData_RECIEVE(received); */
-        publishNodeData(s_recieved);
-
-        // lưu dữ liệu theo node ID
-        if (s_recieved.id > 0 && s_recieved.id <= MAX_NODES) {
-            nodeData[s_recieved.id - 1] = s_recieved;
-            Serial.print("===>>>Saved data for Node "); Serial.println(s_recieved.id);
-        } else {
-            Serial.print("⚠️ Unknown Node ID: "); Serial.println(s_recieved.id);
-        }
-
-    } else {
-        Serial.println("❌ CRC ERROR");
-    }
-
-    // debug raw bytes
-    /* for (int i=0; i<sizeof(IMUSample); i++) {
-        Serial.print(buffer[i], HEX); Serial.print(" ");
-    } 
-    Serial.println(); */
-
-    // print the RSSI (Received Signal Strength Indicator)
-    // of the last received packet
-    Serial.print(F("[SX1278] RSSI:\t\t\t"));
-    Serial.print(radio.getRSSI());
-    Serial.println(F(" dBm"));
-
-    // print the SNR (Signal-to-Noise Ratio)
-    // of the last received packet
-    Serial.print(F("[SX1278] SNR:\t\t\t"));
-    Serial.print(radio.getSNR());
-    Serial.println(F(" dB"));
-
-    // print frequency error
-    // of the last received packet
-    Serial.print(F("[SX1278] Frequency error:\t"));
-    Serial.print(radio.getFrequencyError());
-    Serial.println(F(" Hz"));
-
-  } else if (state == RADIOLIB_ERR_RX_TIMEOUT) {
-    // timeout occurred while waiting for a packet
-    Serial.println(F("timeout!"));
-
-  } else if (state == RADIOLIB_ERR_CRC_MISMATCH) {
-    // packet was received, but is malformed
-    Serial.println(F("CRC error!"));
-
-  } else {
-    // some other error occurred
-    Serial.print(F("failed, code "));
-    Serial.println(state);
-
-  }
+    
 }
 
 static int deserializeIMUSample(IMUSample& s, const uint8_t *buffer) {
