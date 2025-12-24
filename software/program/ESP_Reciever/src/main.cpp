@@ -35,13 +35,13 @@ void setup() {
                           2, 
                           &hHandleNodes,
                           1);
-  // xTaskCreatePinnedToCore(mqtt_push_task,   
-  //                         "MqttPushTask",   
-  //                         4096, 
-  //                         nullptr, 
-  //                         2, 
-  //                         &hMqttPush,  
-  //                         1);
+  xTaskCreatePinnedToCore(mqtt_push_task,   
+                          "MqttPushTask",   
+                          4096, 
+                          nullptr, 
+                          2, 
+                          &hMqttPush,  
+                          1);
 
 
   Serial.println("RTOS pipeline started: RX lora -> Handle Nodes -> Push Data");

@@ -114,23 +114,41 @@ void mqtt_push_task(void* pv) {
   (void)pv;
   IMUSample s;
   uint32_t lastLoop = 0;
+  uint32_t lastPrint = 0;
 
   for (;;) {
     // 1) chờ sample cần publish
     if (xQueueReceive(gMqttQueue, &s, portMAX_DELAY) == pdTRUE) {
-      if (!client.connected()) {
+      /* if (!client.connected()) {
         reconnect();
         if (!client.connected()) continue;
       }
-      publishNodeData(s);  // giữ nguyên topic & format của bạn
+      publishNodeData(s); */  // giữ nguyên topic & format của bạn
+
+      if (xQueueReceive(gMqttQueue, &s, portMAX_DELAY) == pdTRUE) {
+
+      if (millis() - lastPrint >= 50) {
+        lastPrint = millis();
+        Serial.print("  id: ");  Serial.print(s.id);
+        Serial.print("  ax_n: ");  Serial.print(s.ax, 3);
+        Serial.print("  ay_n: ");  Serial.print(s.ay, 3);
+        Serial.print("  az_n: ");  Serial.print(s.az, 3);
+        Serial.print("  gx: ");  Serial.print(s.gx, 3);
+        Serial.print("  gy: ");  Serial.print(s.gy, 3);
+        Serial.print("  gz: ");  Serial.print(s.gz, 3);
+        Serial.print("  t(ms): "); Serial.println(s.dt * 1000.0f, 2);
+
+        Serial.print(" time(s): "); Serial.println(s.t_s, 3);
+      }
+    }
     }
 
     // 2) duy trì MQTT (keep-alive, callback...)
-    uint32_t now = millis();
+    /* uint32_t now = millis();
     if (now - lastLoop >= 100) {
       lastLoop = now;
       client.loop();
-    }
+    } */
 
     vTaskDelay(pdMS_TO_TICKS(5));
   }

@@ -2,7 +2,7 @@
 #include "Custom_Lora.h"
 #include "main.h"
 
-extern QueueHandle_t gRxQueue;
+extern QueueHandle_t gRxQueue, gMqttQueue;
 
 // ==== Tham số xử lý đa node ====
 #define MAX_NODES_AGG         MAX_NODES   // dùng hằng của bạn
@@ -23,7 +23,7 @@ void aggregator_task(void* pv) {
   for (;;) {
     // 1) Hút nhanh tất cả sample có sẵn trong RxQueue
     IMUSample s;
-    /* while (xQueueReceive(gRxQueue, &s, 0) == pdTRUE) {
+    while (xQueueReceive(gRxQueue, &s, 0) == pdTRUE) {
       int node = (int)s.id - 1;
       if (node >= 0 && node < MAX_NODES_AGG) {
         slots[node].last = s;
@@ -44,10 +44,10 @@ void aggregator_task(void* pv) {
         }
       }
     }
-    rr_idx = (rr_idx + 1) % MAX_NODES_AGG; */
+    rr_idx = (rr_idx + 1) % MAX_NODES_AGG;
 
     /* Print to debug */
-    if (xQueueReceive(gRxQueue, &s, portMAX_DELAY) == pdTRUE) {
+    /* if (xQueueReceive(gRxQueue, &s, portMAX_DELAY) == pdTRUE) {
 
       if (millis() - lastPrint >= 50) {
         lastPrint = millis();
@@ -62,7 +62,7 @@ void aggregator_task(void* pv) {
 
         Serial.print(" time(s): "); Serial.println(s.t_s, 3);
       }
-    }
+    } */
 
     vTaskDelay(pdMS_TO_TICKS(AGG_TICK_MS));
   }

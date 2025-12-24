@@ -19,7 +19,7 @@ void setup() {
   Init_MPU6050();
 
   /* Create queues */
-  gTransmit = xQueueCreate(/*length=*/128, sizeof(IMUSample));
+  gTransmit = xQueueCreate(/*length=*/2, sizeof(IMUSample));
 
   /* reate tasks, pin to cores (ESP32: core 0 & 1) */
   xTaskCreatePinnedToCore(sensor_task,        /* Name of task function  */

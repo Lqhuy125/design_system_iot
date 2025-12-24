@@ -33,9 +33,9 @@ int sensor_read(IMUSample* out)
   out->ax = a.acceleration.x * MS2_TO_G;
   out->ay = a.acceleration.y * MS2_TO_G;
   out->az = (a.acceleration.z * MS2_TO_G); //Celebration each micro controller
-  out->gx = a.gyro.x;
-  out->gy = a.gyro.y;
-  out->gz = a.gyro.z;
+  out->gx = g.gyro.x;
+  out->gy = g.gyro.y;
+  out->gz = g.gyro.z;
 
   int32_t now = micros();
   float dt = (now - lastMicros) * 1e-6f;
