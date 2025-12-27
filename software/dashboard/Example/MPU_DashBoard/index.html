@@ -1,0 +1,174 @@
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <script src="https://code.highcharts.com/highcharts.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <script src="https://code.highcharts.com/modules/series-label.js"></script>
+  <script src="https://code.highcharts.com/modules/exporting.js"></script>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- App styles -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- App bar -->
+  <header class="appbar">
+    <div class="brand">
+      <div class="logo">EP</div>
+      <div>Bridge SHM</div>
+    </div>
+    <nav class="tabs">
+      <button class="tab active" data-tab="overview">Tổng quan theo khu vực</button>
+      <!-- <button id="tab-chi-tiet-vi-tri" class="tab" data-tab="nodes">Chi tiết theo vị trí</button> -->
+      <button class="tab" data-tab="alerts">Cảnh báo</button>
+      <button class="tab" data-tab="map">Bản đồ</button>
+    </nav>
+    <div class="spacer"></div>
+    <!-- <div class="user">Hello, <strong>Huy</strong></div> -->
+  </header>
+
+  <main class="container">
+    <!-- KPI -->
+    <section class="kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-icon">🛰️</div>
+        <div class="kpi-content">
+          <div class="kpi-title">Tổng số nodes <span class="kpi-view" data-action="view-online">View</span></div>
+          <div class="kpi-value" id="kpi-total">—</div>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon">🟢</div>
+        <div class="kpi-content">
+          <div class="kpi-title">Số Nodes Online <span class="kpi-view" data-action="view-online">View</span></div>
+          <div class="kpi-value" id="kpi-online">—</div>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon">⛔</div>
+        <div class="kpi-content">
+          <div class="kpi-title">Số Nodes Offline <span class="kpi-view" data-action="view-online">View</span></div>
+          <div class="kpi-value" id="kpi-offline">—</div>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon danger">⚠️</div>
+        <div class="kpi-content">
+          <div class="kpi-title">Số Nodes cảnh báo<span class="kpi-view" data-action="view-online">View</span></div>
+          <div class="kpi-value" id="kpi-warnings">—</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Real-time charts -->
+    
+    <!-- Khu vực 1: danh sách node + trạng thái -->
+
+    <section class="section" id="area-1-table-section">
+      <div class="section-header">
+        Danh sách node (Khu vực 1)
+        <div class="section-tools">
+          <button class="btn icon" id="btn-area-1-table-refresh" title="Làm mới">🔄</button>
+        </div>
+      </div>
+      
+      <div class="table">
+        <div class="table-head">
+          <div>#</div>
+          <div>Node ID</div>
+          <div>Tên vị trí</div>
+          <div>Nhịp/Trụ</div>
+          <div>Trạng thái</div>
+          <div>Pin</div>
+          <div>Nhiệt độ</div>
+        </div>
+        <div class="table-body" id="area-1-table-body"></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-header">Gia tốc rung động</div>
+      <section class="section">
+        <div id="chart-realtime-acc-node1" style="height:300px;"></div>
+      </section>
+      <section class="section">
+        <div id="chart-realtime-acc-node2" style="height:300px;"></div>
+      </section>
+    </section>
+
+    <!-- <section class="section" id="area-2-table-section">
+      <div class="section-header">
+        Danh sách node (Khu vực 2)
+        <div class="section-tools">
+          <button class="btn icon" id="btn-area-2-table-refresh" title="Làm mới">🔄</button>
+        </div>
+      </div>
+      
+      <div class="table">
+        <div class="table-head">
+          <div>#</div>
+          <div>Node ID</div>
+          <div>Tên vị trí</div>
+          <div>Nhịp/Trụ</div>
+          <div>Trạng thái</div>
+          <div>Pin</div>
+          <div>Nhiệt độ</div>
+        </div>
+        <div class="table-body" id="area-2-table-body"></div>
+      </div>
+    </section> -->
+  
+
+    <!-- Frequency analysis -->
+    <!-- <section class="section">
+      <div class="section-header">
+        Phổ tần số (FFT/PSD) & đặc trưng rung
+        <div class="section-tools">
+          <button class="btn" id="btn-recompute">Tính lại FFT</button>
+          fullscreen🔍</button>
+        </div>
+      </div>
+      <div id="chart-fft" style="height:300px;"></div>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-title">RMS (g)</div>
+          <div class="feature-value" id="feat-rms">—</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-title">Peak (g)</div>
+          <div class="feature-value" id="feat-peak">—</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-title">Crest Factor</div>
+          <div class="feature-value" id="feat-crest">—</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-title">Kurtosis</div>
+          <div class="feature-value" id="feat-kurt">—</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-title">f₀ (Hz)</div>
+          <div class="feature-value" id="feat-f0">—</div>
+        </div>
+      </div>
+    </section> -->
+
+    <!-- Map placeholder (cầu) -->
+    <section class="section">
+      <div class="section-header">Bản đồ node trên cầu (layout đơn giản)</div>
+      <div class="bridge-layout" id="bridge-layout"></div>
+    </section>
+
+  </main>
+
+  <!-- Scripts -->
+  <script src="app.js"></script>
+</body>
+</html>
+  <title>Bridge SHM — MPU6050 Dashboard</title>
+
+  <!-- Highcharts -->
