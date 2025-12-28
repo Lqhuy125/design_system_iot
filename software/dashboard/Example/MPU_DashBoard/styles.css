@@ -120,7 +120,29 @@ body{margin:0;background:var(--bg);font-family:Inter,system-ui,-apple-system,"Se
   transform: rotate(90deg);
 }
 
-/* Chức năng hiển thị log theo thời gian*/
+/* Chức năng hiển thị log theo thời gian 
+   Tổng hợp dữ liệu */
+
+.table-summary .table-head,
+.table-summary .table-row {
+  /* 8 cột: Thời gian + 7 thông số */
+  display:grid;
+  grid-template-columns: 180px 110px 110px 110px 110px 110px 110px 120px 1fr
+  /* grid-template-columns: 180px 110px 110px 110px 110px 110px 110px 110px 120px 1fr; */
+}
+.table-summary .table-body {
+  font-size: small;
+  font-weight:300;
+}
+
+@media (max-width: 992px) {
+  .table-summary .table-head,
+  .table-summary .table-row {
+    display:grid;
+    grid-template-columns: 180px 110px 110px 110px 110px 110px 110px 120px 1fr
+  }
+}
+
 
 
 
