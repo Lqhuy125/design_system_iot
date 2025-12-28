@@ -60,21 +60,6 @@ body{margin:0;background:var(--bg);font-family:Inter,system-ui,-apple-system,"Se
 @media (max-width:1200px){.grid{grid-template-columns:repeat(3,1fr)}}
 @media (max-width:768px){.grid{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:520px){.grid{grid-template-columns:1fr}}
-.node-card{border:2px solid #1f2a66;border-radius:12px;padding:12px;background:#fff}
-.node-title{font-weight:800;color:#1f2a66;margin-bottom:8px;display:flex;align-items:center;gap:8px}
-.node-badges{display:flex;gap:6px;flex-wrap:wrap}
-.badge{font-size:12px;padding:6px 8px;border-radius:8px}
-.badge.ok{background:#eaffea;color:#267a2a;border:1px solid #bfe9bf}
-.badge.warn{background:#fff6e6;color:#8a5a00;border:1px solid #f7d8a7}
-.badge.err{background:#ffecec;color:#8a1f1f;border:1px solid #ffcaca}
-.node-rows{margin-top:8px;display:grid;gap:8px}
-.row{display:flex;align-items:center;justify-content:space-between;background:#f7f8fc;border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-weight:700}
-
-/* Features cards */
-.features-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:12px}
-.feature-card{background:#f7f8fc;border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center}
-.feature-title{font-weight:700;color:var(--muted)}
-.feature-value{font-size:20px;font-weight:800;color:#1b2541}
 
 /* Alerts table */
 .table{border:1px solid var(--border);border-radius:12px;overflow:hidden}
@@ -104,12 +89,6 @@ body{margin:0;background:var(--bg);font-family:Inter,system-ui,-apple-system,"Se
 
 /* Hiển thị node cho từng khu vực */
 
-/* Inline badge in tools */
-.badge-inline{
-  background:#f0f7ff; color:#173a8a; border:1px solid #9fc6ff;
-  padding:6px 10px; border-radius:10px; font-weight:700; font-size:13px;
-}
-
 /* Khu vực: lưới node */
 .area-grid{
   display:grid;
@@ -122,63 +101,6 @@ body{margin:0;background:var(--bg);font-family:Inter,system-ui,-apple-system,"Se
 @media (max-width:768px){  .area-grid{ grid-template-columns:repeat(4, 1fr) } }
 @media (max-width:540px){  .area-grid{ grid-template-columns:repeat(3, 1fr) } }
 @media (max-width:420px){  .area-grid{ grid-template-columns:repeat(2, 1fr) } }
-
-/* Thẻ node tối giản */
-.area-node{
-  background:#fff;
-  border:1px solid var(--border);
-  border-radius:12px;
-  box-shadow:var(--shadow);
-  padding:10px 10px 6px;
-  display:flex; flex-direction:column; align-items:center; justify-content:center;
-}
-.area-node .node-emoji{
-  width:40px; height:40px;
-  border-radius:50%;
-  display:grid; place-items:center;
-  background:#eef4ff; color:#0b74ff; border:1px solid #cfe0ff;
-  font-size:20px; margin-bottom:6px;
-}
-.area-node .node-name{
-  font-size:12px; font-weight:700; color:#1b2541; text-align:center;
-  line-height:1.25; min-height:30px; /* giữ chiều cao ổn định */
-}
-.area-node .node-id{
-  font-size:11px; color:#6b7a99; margin-top:2px;
-}
-
-/* Dấu chấm trạng thái dưới mỗi node */
-
-/* 1 chấm trạng thái */
-.node-status{
-  width:10px; height:10px; border-radius:50%;
-  border:1px solid #d6e0f0;
-  margin-top:8px;
-}
-.node-status.ok{  background:#22c55e; border-color:#22c55e }
-.node-status.off{ background:#ff4d4f; border-color:#ff4d4f }
-
-
-/* Vùng strip (khung trong section) */
-.area-strip{
-  display:flex;
-  align-items:flex-start;
-  gap:16px;
-  padding:12px;
-  border:1px solid var(--border);
-  border-radius:16px;
-  box-shadow:var(--shadow);
-  background:#ffffff;
-}
-
-/* Hàng ngang node, tự wrap khi hẹp */
-.area-row{
-  display:flex;
-  gap:24px;
-  flex-wrap:wrap;
-  align-items:flex-start;
-  width:100%;
-}
 
 /* Chức năng thu nhỏ chart */
 .node-header {
@@ -198,7 +120,7 @@ body{margin:0;background:var(--bg);font-family:Inter,system-ui,-apple-system,"Se
   transform: rotate(90deg);
 }
 
-/* Chức */
+/* Chức năng hiển thị log theo thời gian*/
 
 
 
