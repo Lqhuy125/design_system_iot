@@ -279,3 +279,70 @@ function toggleNode(nodeId, arrow) {
   arrow.classList.toggle("open", isHidden);
 }
 /* ======================================= */
+
+/* Giả lập data để hiển thị tổng hợp */
+const summaryIMURowsMock = [
+  { time: '14:03:30 31/08/2025', name_node: 1, ax: 0.035, ay: -0.012, az: 0.985, gx:  3.1, gy: -2.4, gz:  1.0, temp: 28.6 },
+  { time: '14:02:30 31/08/2025', name_node: 2, ax: 0.081, ay:  0.020, az: 0.990, gx:  6.8, gy:  4.1, gz: -3.0, temp: 28.4 },
+  { time: '14:01:30 31/08/2025', name_node: 3, ax: 0.022, ay: -0.018, az: 0.978, gx: -1.2, gy:  0.9, gz:  2.5, temp: 28.3 },
+  { time: '14:00:30 31/08/2025', name_node: 1, ax: 0.029, ay:  0.010, az: 0.982, gx:  0.5, gy: -1.5, gz:  0.7, temp: 28.3 },
+  { time: '13:59:30 31/08/2025', name_node: 2, ax: 0.110, ay:  0.035, az: 0.995, gx:  9.8, gy:  6.2, gz: -5.1, temp: 28.2 },
+  { time: '13:58:30 31/08/2025', name_node: 3, ax: 0.040, ay: -0.022, az: 0.979, gx: -2.0, gy:  1.0, gz:  4.2, temp: 28.2 },
+  { time: '13:57:30 31/08/2025', name_node: 1, ax: 0.033, ay:  0.014, az: 0.981, gx:  1.8, gy: -0.7, gz:  2.0, temp: 28.1 },
+  { time: '13:56:30 31/08/2025', name_node: 2, ax: 0.025, ay: -0.011, az: 0.980, gx: -0.9, gy:  0.3, gz:  1.1, temp: 28.1 },
+];
+
+/* Định dạng số an toàn */
+function fmt(v, nd=2) {
+  if (v === null || v === undefined || Number.isNaN(v)) return '—';
+  return Number(v).toFixed(nd);
+}
+
+function renderSummaryIMUTable(rows = summaryIMURowsMock) {
+  const body = document.getElementById('summary-table-body');
+  if (!body) return;
+
+  body.innerHTML = rows.map(r => `
+    <div class="table-row">
+      <div>${r.time}</div>
+      <div>${fmt(r.name_node,0)}</div>
+      <div>${fmt(r.ax, 3)}</div>
+      <div>${fmt(r.ay, 3)}</div>
+      <div>${fmt(r.az, 3)}</div>
+      <div>${fmt(r.gx, 1)}</div>
+      <div>${fmt(r.gy, 1)}</div>
+      <div>${fmt(r.gz, 1)}</div>
+      <div>${fmt(r.temp, 1)}</div>
+    </div>
+  `).join('');
+}
+
+/* Export CSV (Excel mở trực tiếp) */
+function exportSummaryIMUCSV(rows = summaryIMURowsMock) {
+  const header = ['Thời gian', 'Node', 'Ax (g)','Ay (g)','Az (g)','Gx (°/s)','Gy (°/s)','Gz (°/s)','Nhiệt độ (°C)'];
+  const lines = [header.join(',')].concat(
+    rows.map(r => [r.time, r.name_node, r.ax, r.ay, r.az, r.gx, r.gy, r.gz, r.temp].join(','))
+  );
+  const csv = lines.join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `TongHop_IMU_${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+
+document.addEventListener('DOMContentLoaded', () => {
+  renderSummaryIMUTable(summaryIMURowsMock);
+
+  const btn = document.getElementById('btn-export-summary');
+  if (btn) btn.addEventListener('click', () => exportSummaryIMUCSV());
+
+  const sel = document.getElementById('summary-device');
+  if (sel) sel.addEventListener('change', () => {
+    // TODO: lọc theo node nếu có dữ liệu thật
+    renderSummaryIMUTable(summaryIMURowsMock);
+  });
+});

@@ -23,12 +23,10 @@
     </div>
     <nav class="tabs">
       <button class="tab active" data-tab="overview">Tổng quan theo khu vực</button>
-      <!-- <button id="tab-chi-tiet-vi-tri" class="tab" data-tab="nodes">Chi tiết theo vị trí</button> -->
       <button class="tab" data-tab="alerts">Cảnh báo</button>
       <button class="tab" data-tab="map">Bản đồ</button>
     </nav>
     <div class="spacer"></div>
-    <!-- <div class="user">Hello, <strong>Huy</strong></div> -->
   </header>
 
   <main class="container">
@@ -119,40 +117,68 @@
         <div id="chart-realtime-acc-node3" style="height:300px;"></div>
       </section>
     </section>
-  
-    <!-- Frequency analysis -->
-    <!-- <section class="section">
+
+    <!-- <section class="section" id="summary-section">
       <div class="section-header">
-        Phổ tần số (FFT/PSD) & đặc trưng rung
-        <div class="section-tools">
-          <button class="btn" id="btn-recompute">Tính lại FFT</button>
-          fullscreen🔍</button>
+        <div>Tổng hợp dữ liệu SHM</div>
+        <div class="section-tools"> -->
+          <!-- Bộ chọn node (tuỳ chọn) -->
+          <!-- <select id="summary-device" class="btn" style="min-width:160px">
+            <option value="N01">Node N01</option>
+            <option value="N02">Node N02</option>
+            <option value="N03">Node N03</option>
+          </select>
+          <button id="btn-export-summary" class="btn primary">Export Excel</button>
+          <a id="btn-view-report" class="btn" href="#" title="Xem báo cáo">Xem báo cáo</a>
         </div>
       </div>
-      <div id="chart-fft" style="height:300px;"></div>
-      <div class="features-grid">
-        <div class="feature-card">
-          <div class="feature-title">RMS (g)</div>
-          <div class="feature-value" id="feat-rms">—</div>
+
+      <div class="table table-summary">
+        <div class="table-head">
+          <div>Thời gian</div>
+          <div>Gia tốc RMS (g)</div>
+          <div>Vận tốc RMS (mm/s)</div>
+          <div>Dịch chuyển RMS (µm)</div>
+          <div>Nhiệt độ (°C)</div>
+          <div>Pin (%)</div>
+          <div>Trạng thái</div>
+          <div>Cảnh báo biên độ</div>
+          <div>Cảnh báo phổ tần</div>
         </div>
-        <div class="feature-card">
-          <div class="feature-title">Peak (g)</div>
-          <div class="feature-value" id="feat-peak">—</div>
-        </div>
-        <div class="feature-card">
-          <div class="feature-title">Crest Factor</div>
-          <div class="feature-value" id="feat-crest">—</div>
-        </div>
-        <div class="feature-card">
-          <div class="feature-title">Kurtosis</div>
-          <div class="feature-value" id="feat-kurt">—</div>
-        </div>
-        <div class="feature-card">
-          <div class="feature-title">f₀ (Hz)</div>
-          <div class="feature-value" id="feat-f0">—</div>
-        </div>
+        <div class="table-body" id="summary-table-body"></div>
       </div>
     </section> -->
+
+<!-- ======= Tổng hợp dữ liệu (Acc / Gyro / Nhiệt độ) ======= -->
+    <section class="section" id="summary-section">
+      <div class="section-header">
+        <div>Tổng hợp dữ liệu</div>
+        <div class="section-tools">
+          <!-- Bộ chọn node (tuỳ chọn) -->
+          <select id="summary-device" class="btn" style="min-width:160px">
+            <option value="N01">Node N01</option>
+            <option value="N02">Node N02</option>
+            <option value="N03">Node N03</option>
+          </select>
+          <button id="btn-export-summary" class="btn primary">Export Excel</button>
+        </div>
+      </div>
+
+      <div class="table table-summary">
+        <div class="table-head">
+          <div>Thời gian</div>
+          <div>Node</div>
+          <div>Ax(g)</div>
+          <div>Ay(g)</div>
+          <div>Az(g)</div>
+          <div>Gx(°/s)</div>
+          <div>Gy(°/s)</div>
+          <div>Gz(°/s)</div>
+          <div>Temp(°C)</div>
+        </div>
+        <div class="table-body" id="summary-table-body"></div>
+      </div>
+    </section>
 
     <!-- Map placeholder (cầu) -->
     <section class="section">
