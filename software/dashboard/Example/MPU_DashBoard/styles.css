@@ -180,5 +180,25 @@ body{margin:0;background:var(--bg);font-family:Inter,system-ui,-apple-system,"Se
   width:100%;
 }
 
+/* Chức năng thu nhỏ chart */
+.node-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.toggle-node {
+  cursor: pointer;
+  font-size: 16px;
+  user-select: none;
+  transition: transform 0.2s ease;
+}
+
+.toggle-node.open {
+  transform: rotate(90deg);
+}
+
+/* Chức */
+
 
 

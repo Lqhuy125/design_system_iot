@@ -67,7 +67,6 @@
     <!-- Real-time charts -->
     
     <!-- Khu vực 1: danh sách node + trạng thái -->
-
     <section class="section" id="area-1-table-section">
       <div class="section-header">
         Danh sách node (Khu vực 1)
@@ -90,39 +89,37 @@
       </div>
     </section>
 
+    <!-- Chart data for each nodes -->
     <section class="section">
-      <div class="section-header">Gia tốc rung động</div>
-      <section class="section">
+      <div class="section-header node-header">
+        Node 1
+        <span class="toggle-node" onclick="toggleNode('node1', this)">▶</span>
+      </div>
+      <section class="section node-content" id="node1">
         <div id="chart-realtime-acc-node1" style="height:300px;"></div>
       </section>
-      <section class="section">
+    </section>
+
+    <section class="section">
+      <div class="section-header node-header">
+        Node 2
+        <span class="toggle-node" onclick="toggleNode('node2', this)">▶</span>
+      </div>
+      <section class="section node-content" id="node2">
         <div id="chart-realtime-acc-node2" style="height:300px;"></div>
       </section>
     </section>
 
-    <!-- <section class="section" id="area-2-table-section">
-      <div class="section-header">
-        Danh sách node (Khu vực 2)
-        <div class="section-tools">
-          <button class="btn icon" id="btn-area-2-table-refresh" title="Làm mới">🔄</button>
-        </div>
+    <section class="section">
+      <div class="section-header node-header">
+        Node 3
+        <span class="toggle-node" onclick="toggleNode('node3', this)">▶</span>
       </div>
-      
-      <div class="table">
-        <div class="table-head">
-          <div>#</div>
-          <div>Node ID</div>
-          <div>Tên vị trí</div>
-          <div>Nhịp/Trụ</div>
-          <div>Trạng thái</div>
-          <div>Pin</div>
-          <div>Nhiệt độ</div>
-        </div>
-        <div class="table-body" id="area-2-table-body"></div>
-      </div>
-    </section> -->
+      <section class="section node-content" id="node3">
+        <div id="chart-realtime-acc-node3" style="height:300px;"></div>
+      </section>
+    </section>
   
-
     <!-- Frequency analysis -->
     <!-- <section class="section">
       <div class="section-header">

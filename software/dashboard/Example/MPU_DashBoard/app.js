@@ -53,71 +53,168 @@ btnRefresh();
 /*================START DISLAY CHART ACC================= */
 /* Hiện thị chart cho Accelerator các node - Cả 3 trục của 1 node trên 1 chart */
 function renderRealtimeChart() {
-  const chart_node1 = Highcharts.chart('chart-realtime-acc-node1', {
+  const chart_acc_node1 = Highcharts.chart('chart-realtime-acc-node1', {
     chart: { type:'line' },
-    title: { text: 'Gia tốc – Node 01' },
+    title: { text: 'Dữ liệu rung động (Gia tốc & Tốc độ góc)' },
     xAxis: {
       categories: [],
       title: { text: 'Thời điểm' }
     },
-    yAxis: { title: { text: 'Gia tốc (g)' } },
+    yAxis: [
+      { // Y LEFT – ACC
+        title: { text: 'Gia tốc (g)' },
+        min: -2,
+        max: 2
+      },
+      { // Y RIGHT – GYRO
+        title: { text: 'Tốc độ góc (°/s)' },
+        opposite: true,
+        min: -10,
+        max: 10
+      }
+    ],
     legend: { enabled:true },
     credits: { enabled:false },
     exporting:{ enabled:true },
     series: [
       { name: 'Ax', data: [] },
       { name: 'Ay', data: [] },
-      { name: 'Az', data: [] }
+      { name: 'Az', data: [] },
+      { name: 'Gx', yAxis: 1, data: [] },
+      { name: 'Gy', yAxis: 1, data: [] },
+      { name: 'Gz', yAxis: 1, data: [] }
     ]
   });
 
-  const chart_node2 = Highcharts.chart('chart-realtime-acc-node2', {
+  const chart_acc_node2 = Highcharts.chart('chart-realtime-acc-node2', {
     chart: { type:'line' },
-    title: { text: 'Gia tốc – Node 02' },
+    title: { text: 'Dữ liệu rung động (Gia tốc & Tốc độ góc)' },
     xAxis: {
       categories: [],
       title: { text: 'Thời điểm' }
     },
-    yAxis: { title: { text: 'Gia tốc (g)' } },
+    yAxis: [
+      { // Y LEFT – ACC
+        title: { text: 'Gia tốc (g)' },
+        min: -2,
+        max: 2
+      },
+      { // Y RIGHT – GYRO
+        title: { text: 'Tốc độ góc (°/s)' },
+        opposite: true,
+        min: -10,
+        max: 10
+      }
+    ],
     legend: { enabled:true },
     credits: { enabled:false },
     exporting:{ enabled:true },
     series: [
       { name: 'Ax', data: [] },
       { name: 'Ay', data: [] },
-      { name: 'Az', data: [] }
+      { name: 'Az', data: [] },
+      { name: 'Gx', yAxis: 1, data: [] },
+      { name: 'Gy', yAxis: 1, data: [] },
+      { name: 'Gz', yAxis: 1, data: [] }
     ]
   });
+
+  const chart_acc_node3 = Highcharts.chart('chart-realtime-acc-node3', {
+    chart: { type:'line' },
+    title: { text: 'Dữ liệu rung động (Gia tốc & Tốc độ góc)' },
+    xAxis: {
+      categories: [],
+      title: { text: 'Thời điểm' }
+    },
+    yAxis: [
+      { // Y LEFT – ACC
+        title: { text: 'Gia tốc (g)' },
+        min: -2,
+        max: 2
+      },
+      { // Y RIGHT – GYRO
+        title: { text: 'Tốc độ góc (°/s)' },
+        opposite: true,
+        min: -10,
+        max: 10
+      }
+    ],
+    legend: { enabled:true },
+    credits: { enabled:false },
+    exporting:{ enabled:true },
+    series: [
+      { name: 'Ax', data: [] },
+      { name: 'Ay', data: [] },
+      { name: 'Az', data: [] },
+      { name: 'Gx', yAxis: 1, data: [] },
+      { name: 'Gy', yAxis: 1, data: [] },
+      { name: 'Gz', yAxis: 1, data: [] }
+    ]
+  });
+
+  /* Chức năng ẩn/hiện theo loại data */
+  addEyeToggle(chart_acc_node1);
+  addEyeToggle(chart_acc_node2);
+  addEyeToggle(chart_acc_node3);
 }
 
 function updateAccelChart(sample) {
-  const chart_node1 = Highcharts.charts[0];
+  /* Hiển thị Acc cho từng node */
+  const chart_acc_node1 = Highcharts.charts[0];
 
-  chart_node1.xAxis[0].categories.push(sample.time);
-  chart_node1.series[0].addPoint(sample.ax, false);
-  chart_node1.series[1].addPoint(sample.ay, false);
-  chart_node1.series[2].addPoint(sample.az, false);
+  chart_acc_node1.xAxis[0].categories.push(sample.time);
+  chart_acc_node1.series[0].addPoint(sample.ax, false);
+  chart_acc_node1.series[1].addPoint(sample.ay, false);
+  chart_acc_node1.series[2].addPoint(sample.az, false);
+  
+  chart_acc_node1.series[3].addPoint(sample.gx, false);
+  chart_acc_node1.series[4].addPoint(sample.gy, false);
+  chart_acc_node1.series[5].addPoint(sample.gz, false);
 
-  const chart_node2 = Highcharts.charts[1];
+  const chart_acc_node2 = Highcharts.charts[1];
 
-  chart_node2.xAxis[0].categories.push(sample.time);
-  chart_node2.series[0].addPoint(sample.ax, false);
-  chart_node2.series[1].addPoint(sample.ay, false);
-  chart_node2.series[2].addPoint(sample.az, false);
+  chart_acc_node2.xAxis[0].categories.push(sample.time);
+  chart_acc_node2.series[0].addPoint(sample.ax, false);
+  chart_acc_node2.series[1].addPoint(sample.ay, false);
+  chart_acc_node2.series[2].addPoint(sample.az, false);
+  chart_acc_node2.series[3].addPoint(sample.gx, false);
+  chart_acc_node2.series[4].addPoint(sample.gy, false);
+  chart_acc_node2.series[5].addPoint(sample.gz, false);
 
-  chart_node1.redraw();
-  chart_node2.redraw();
+  const chart_acc_node3 = Highcharts.charts[2];
+
+  chart_acc_node3.xAxis[0].categories.push(sample.time);
+  chart_acc_node3.series[0].addPoint(sample.ax, false);
+  chart_acc_node3.series[1].addPoint(sample.ay, false);
+  chart_acc_node3.series[2].addPoint(sample.az, false);
+  chart_acc_node3.series[3].addPoint(sample.gx, false);
+  chart_acc_node3.series[4].addPoint(sample.gy, false);
+  chart_acc_node3.series[5].addPoint(sample.gz, false);
+
+  chart_acc_node1.redraw();
+  chart_acc_node2.redraw();
+  chart_acc_node3.redraw();
+
+  /* Hiện thị Gyro cho từng node */
+  
 }
 function generateAccelSample() {
   const ax = +(Math.random() * 0.2 - 0.1).toFixed(3);
   const ay = +(Math.random() * 0.2 - 0.1).toFixed(3);
   const az = +(0.98 + Math.random() * 0.05).toFixed(3);
 
+  const gx = +(Math.random()*20 - 10).toFixed(1);
+  const gy = +(Math.random()*20 - 10).toFixed(1);
+  const gz = +(Math.random()*20 - 10).toFixed(1);
+
   return {
     time: new Date().toLocaleTimeString(),
     ax,
     ay,
-    az
+    az,
+    gx,
+    gy,
+    gz
   };
 }
 
@@ -127,4 +224,58 @@ setInterval(() => {
   updateAccelChart(sample);             // 2. update chart
 }, 1000);
 
+function addEyeToggle(chart) {
+  let accVisible = true;
+  let gyroVisible = true;
+
+  // ◉ ACC
+  const accEye = chart.renderer
+    .label('◉ ACC', 10, chart.chartHeight - 35)
+    .css({ cursor: 'pointer', fontSize: '12px' })
+    .attr({ zIndex: 7 })
+    .add();
+
+  accEye.on('click', function () {
+    accVisible = !accVisible;
+    chart.series.forEach(s => {
+      if (['Ax', 'Ay', 'Az'].includes(s.name)) {
+        s.setVisible(accVisible, false);
+      }
+    });
+    chart.redraw();
+    accEye.attr({ text: accVisible ? '◉ ACC' : '🚫 ACC' });
+  });
+
+  // ◉ GYRO
+  const gyroEye = chart.renderer
+    .label('◉ GYRO', 80, chart.chartHeight - 35)
+    .css({ cursor: 'pointer', fontSize: '12px' })
+    .attr({ zIndex: 7 })
+    .add();
+
+  gyroEye.on('click', function () {
+    gyroVisible = !gyroVisible;
+    chart.series.forEach(s => {
+      if (['Gx', 'Gy', 'Gz'].includes(s.name)) {
+        s.setVisible(gyroVisible, false);
+      }
+    });
+    chart.redraw();
+    gyroEye.attr({ text: gyroVisible ? '◉ GYRO' : '🚫 GYRO' });
+  });
+}
 /*================END DISLAY CHART ACC================= */
+
+/* Thu nhỏ char */
+function toggleNode(nodeId, arrow) {
+  const node = document.getElementById(nodeId);
+
+  if (!node) return;
+
+  const isHidden = node.style.display === "none";
+
+  node.style.display = isHidden ? "block" : "none";
+
+  arrow.classList.toggle("open", isHidden);
+}
+/* ======================================= */
