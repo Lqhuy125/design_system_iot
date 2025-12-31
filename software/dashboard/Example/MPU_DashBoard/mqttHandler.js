@@ -74,6 +74,16 @@
     if (typeof msg.gz === "number") safeUpdateChart("gyroZ", nodeIndex, msg.gz);
 
     // Không cập nhật temp/battery theo yêu cầu hiện tại.
+
+    /*  */
+    if (typeof window.appendSummaryRow === "function") {
+      window.appendSummaryRow({
+        nodeId: nodeStr,
+        ax: msg.ax, ay: msg.ay, az: msg.az,
+        gx: msg.gx, gy: msg.gy, gz: msg.gz,
+        temp: msg.temp,
+      });
+    }
   });
 
   // expose client để debug

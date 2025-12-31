@@ -11,6 +11,10 @@ Payload:
   "ax": <float>, "ay": <float>, "az": <float>,
   "gx": <float>, "gy": <float>, "gz": <float>
   // "temp": <float>, "battery": <int>  # nếu muốn có thể bật thêm
+
+  cmd to run:
+
+    python sample_transmit.py --verbose
 }
 """
 
@@ -114,7 +118,7 @@ def main():
         while running:
             now = time.time()
             if now < next_tick:
-                time.sleep(min(0.01, next_tick - now))
+                time.sleep(min(0.1, next_tick - now))
                 continue
 
             ts_ms = epoch_ms()

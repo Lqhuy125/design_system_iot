@@ -133,6 +133,7 @@ body{margin:0;background:var(--bg);font-family:Inter,system-ui,-apple-system,"Se
 .table-summary .table-body {
   font-size: small;
   font-weight:300;
+  vertical-align: middle;
 }
 
 @media (max-width: 992px) {
