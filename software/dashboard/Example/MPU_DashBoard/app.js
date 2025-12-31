@@ -217,12 +217,12 @@ function generateAccelSample() {
     gz
   };
 }
-
+/* // Tạo chart mẫu (cũ) & auto cập nhật mỗi giây bằng dữ liệu giả
 renderRealtimeChart();
 setInterval(() => {
   const sample = generateAccelSample(); // 1. lấy dữ liệu mới
   updateAccelChart(sample);             // 2. update chart
-}, 1000);
+}, 1000); */
 
 function addEyeToggle(chart) {
   let accVisible = true;
@@ -346,3 +346,48 @@ document.addEventListener('DOMContentLoaded', () => {
     renderSummaryIMUTable(summaryIMURowsMock);
   });
 });
+
+
+
+document.addEventListener('DOMContentLoaded', () => {
+  renderRealtimeChart(); // creates the 3 charts
+});
+const NODE_CONTAINER_IDS = [
+  "chart-realtime-acc-node1",
+  "chart-realtime-acc-node2",
+  "chart-realtime-acc-node3"
+];
+function getChartByNodeIndex(nodeIndex) {
+  const targetId = NODE_CONTAINER_IDS[Math.max(0, Math.min(2, nodeIndex))];
+  return Highcharts.charts.find(c => c && c.renderTo && c.renderTo.id === targetId) || null;
+}
+
+const MAX_POINTS = 500;
+
+// chartKey: 'accX'|'accY'|'accZ'|'gyroX'|'gyroY'|'gyroZ'
+// nodeIndex: 0-based (N01->0, N02->1, N03->2)
+// value: số
+window.updateChart = function(chartKey, nodeIndex, value) {
+  
+  console.log("[UPDATE]", chartKey, "node", nodeIndex, "val", value);
+
+  const chart = getChartByNodeIndex(nodeIndex);
+  if (!chart) return;
+
+  const seriesMap = { accX:0, accY:1, accZ:2, gyroX:3, gyroY:4, gyroZ:5 };
+  const sIdx = seriesMap[chartKey];
+  if (sIdx === undefined) return;
+
+  chart.series[sIdx].addPoint(value, false);
+
+  // Nhãn thời gian: dùng local time (nếu muốn dùng ts từ JSON, có thể sửa để nhận timeLabel)
+  const timeLabel = new Date().toLocaleTimeString();
+  chart.xAxis[0].categories.push(timeLabel);
+
+  // Giới hạn điểm để giữ hiệu năng
+  if (chart.series[sIdx].data.length > MAX_POINTS) chart.series[sIdx].removePoint(0, false);
+  if (chart.xAxis[0].categories.length > MAX_POINTS) chart.xAxis[0].categories.shift();
+
+  chart.redraw();
+};
+
