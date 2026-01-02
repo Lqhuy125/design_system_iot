@@ -60,7 +60,7 @@ void transmit_task(void* pv) {
   for (;;) {
     if (xQueueReceive(gTransmit, &s, portMAX_DELAY) == pdTRUE) {
 
-      if (millis() - lastPrint >= 50) {
+      if (millis() - lastPrint >= 1000) {
         lastPrint = millis();
 
         lora_send_imusample(s);

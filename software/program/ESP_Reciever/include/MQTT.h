@@ -19,4 +19,5 @@ void reconnect();
 
 void mqtt_push_task(void* pv);
 
+static inline void makeNodeIdStr(char* out, size_t len, int id);
 #endif

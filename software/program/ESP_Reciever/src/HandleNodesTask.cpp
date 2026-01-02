@@ -18,33 +18,37 @@ typedef struct {
 void aggregator_task(void* pv) {
   (void)pv;
   static NodeSlot slots[MAX_NODES_AGG];
-  uint32_t rr_idx = 0;
-  uint32_t lastPrint = 0;
+  TickType_t lastWake = xTaskGetTickCount();
+  const TickType_t periodTicks = pdMS_TO_TICKS(20);   // AGG_TICK_MS
   for (;;) {
     // 1) Hút nhanh tất cả sample có sẵn trong RxQueue
     IMUSample s;
-    while (xQueueReceive(gRxQueue, &s, 0) == pdTRUE) {
-      int node = (int)s.id - 1;
-      if (node >= 0 && node < MAX_NODES_AGG) {
-        slots[node].last = s;
-        slots[node].has_data = true;
-      }
+    
+    for (int i = 0; i < 16; ++i) {  // đỡ “nuốt” CPU nếu queue dài
+      if (xQueueReceive(gRxQueue, &s, 0) == pdTRUE) {
+        int node = (int)s.id - 1;
+        if (0 <= node && node < MAX_NODES_AGG) {
+          slots[node].last = s;
+          slots[node].has_data = true;
+        }
+      } 
+      else
+        break;
     }
 
+
     // 2) Round-robin các node, publish nếu đủ spacing
-    for (int k = 0; k < MAX_NODES_AGG; ++k) {    uint32_t now = millis();
-      int node = (rr_idx + k) % MAX_NODES_AGG;
-      if (slots[node].has_data) {
-        if (now - slots[node].last_published_ms >= PUBLISH_MIN_SPACING_MS) {
-          if (xQueueSend(gMqttQueue, &slots[node].last, 0) == pdTRUE) {
-            slots[node].last_published_ms = now;
-            // Nếu chỉ muốn publish "mẫu mới nhất" rồi clear:
-            // slots[node].has_data = false;
-          }
+    const uint32_t now = millis();
+    for (int node = 0; node < MAX_NODES_AGG; ++node) {
+      if (!slots[node].has_data) continue;
+      if (now - slots[node].last_published_ms >= PUBLISH_MIN_SPACING_MS) {
+        if (xQueueSend(gMqttQueue, &slots[node].last, 0) == pdTRUE) {
+          slots[node].last_published_ms = now;
+          slots[node].has_data = false;     // RẤT QUAN TRỌNG: tránh re-publish cùng sample
         }
       }
     }
-    rr_idx = (rr_idx + 1) % MAX_NODES_AGG;
+
 
     /* Print to debug */
     /* if (xQueueReceive(gRxQueue, &s, portMAX_DELAY) == pdTRUE) {
@@ -64,6 +68,7 @@ void aggregator_task(void* pv) {
       }
     } */
 
-    vTaskDelay(pdMS_TO_TICKS(AGG_TICK_MS));
+    // vTaskDelay(pdMS_TO_TICKS(AGG_TICK_MS));
+    vTaskDelayUntil(&lastWake, periodTicks);
   }
 }

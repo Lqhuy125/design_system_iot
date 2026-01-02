@@ -27,7 +27,7 @@ void setup() {
                           nullptr, 
                           3, 
                           &hLoRaRx,     
-                          0);
+                          1);
   xTaskCreatePinnedToCore(aggregator_task,  
                           "AggregatorTask", 
                           4096, 
@@ -41,7 +41,7 @@ void setup() {
                           nullptr, 
                           2, 
                           &hMqttPush,  
-                          1);
+                          0);
 
 
   Serial.println("RTOS pipeline started: RX lora -> Handle Nodes -> Push Data");

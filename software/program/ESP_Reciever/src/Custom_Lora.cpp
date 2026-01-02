@@ -1,5 +1,13 @@
 #include "Custom_Lora.h"
 
+
+// ====== ISR flag ======
+static volatile bool loraRxFlag = false;
+static void IRAM_ATTR onLoraRx() {
+  // Tuyệt đối KHÔNG print/khóa mutex trong ISR
+  loraRxFlag = true;
+}
+
 /*  Declare variable */
 SX1278 radio = new Module(ss, dio0, rst);
 
@@ -38,6 +46,12 @@ void InitLora(void)
       Serial.println(state);
       while (true) { delay(10); }
     }
+
+    radio.setPacketReceivedAction(onLoraRx);
+    
+    // Arm nhận ở chế độ non-blocking
+    radio.startReceive();
+
 }
 
 /* Send Data */
@@ -122,11 +136,11 @@ bool lora_receive_once(IMUSample &out) {
     memcpy(&recv_crc, &buf[IMU_PAYLOAD_LEN], sizeof(recv_crc));
     uint32_t calc_crc = calcCRC32(buf, IMU_PAYLOAD_LEN);
     if (calc_crc != recv_crc) {
-      Serial.println(F("❌ CRC ERROR (IMU)"));
+      /* Serial.println(F("❌ CRC ERROR (IMU)"));
       for (int i=0; i<sizeof(IMUSample); i++) {
           Serial.print(buf[i], HEX); Serial.print(" ");
       }
-      Serial.println(" ");
+      Serial.println(" "); */
       return false;
     }
 
@@ -160,17 +174,64 @@ bool lora_receive_once(IMUSample &out) {
   }
 }
 
+static bool deserializeIMUSample(IMUSample &out, const uint8_t* buf, size_t len) {
+  // 1) lấy CRC cuối buffer (little-endian)
+  uint32_t recv_crc;
+  memcpy(&recv_crc, &buf[IMU_PAYLOAD_LEN], sizeof(recv_crc));
+  uint32_t calc_crc = calcCRC32(buf, IMU_PAYLOAD_LEN);
+  if (calc_crc != recv_crc) {
+    /* Serial.println(F("❌ CRC ERROR (IMU)"));
+    for (int i=0; i<sizeof(IMUSample); i++) {
+        Serial.print(buf[i], HEX); Serial.print(" ");
+    }
+    Serial.println(" "); */
+    return false;
+  }
+
+  // 3) copy từng trường theo đúng thứ tự serialize bên TX
+  // Giải IMUSample đúng thứ tự serializeIMUSample()
+  int idx = 0;
+  memcpy(&out.id, &buf[idx], sizeof(out.id)); idx += sizeof(out.id);
+  memcpy(&out.ax, &buf[idx], sizeof(out.ax)); idx += sizeof(out.ax);
+  memcpy(&out.ay, &buf[idx], sizeof(out.ay)); idx += sizeof(out.ay);
+  memcpy(&out.az, &buf[idx], sizeof(out.az)); idx += sizeof(out.az);
+  memcpy(&out.gx, &buf[idx], sizeof(out.gx)); idx += sizeof(out.gx);
+  memcpy(&out.gy, &buf[idx], sizeof(out.gy)); idx += sizeof(out.gy);
+  memcpy(&out.gz, &buf[idx], sizeof(out.gz)); idx += sizeof(out.gz);
+  memcpy(&out.dt, &buf[idx], sizeof(out.dt)); idx += sizeof(out.dt);
+  memcpy(&out.t_s, &buf[idx], sizeof(out.t_s)); idx += sizeof(out.t_s);
+  out.crc = recv_crc;   // lưu lại CRC ứng dụng nếu struct có trường crc
+
+  // (tuỳ chọn) in RSSI/SNR
+  // Serial.printf("[SX1278] RX OK size=%d RSSI=%d SNR=%.1f\n",
+  //               IMU_TOTAL_LEN, radio.getRSSI(), radio.getSNR());
+
+  return true;
+}
+
 
 void lora_rx_task(void* pv) {
   (void)pv;
+  uint8_t rxBuf[IMU_TOTAL_LEN];
+
   for (;;) {
-    IMUSample s;
-    if (lora_receive_once(s)) {
-      if (xQueueSend(gRxQueue, &s, 0) != pdTRUE) {
-        Serial.println("⚠️ gRxQueue full, drop sample");
+    if (loraRxFlag) {
+      loraRxFlag = false;
+      IMUSample s;
+      int state = radio.readData(rxBuf, IMU_TOTAL_LEN);
+      if (state == RADIOLIB_ERR_NONE) {
+
+        bool check = deserializeIMUSample(s, rxBuf, IMU_TOTAL_LEN);
+        if (check) {      // <-- GÁN GIÁ TRỊ CHO S
+          if (xQueueSend(gRxQueue, &s, 0) != pdTRUE) {    // <-- GIỜ MỚI SEND
+            Serial.println("⚠️ gRxQueue full, drop sample");
+          }
+        }
       }
+      // re-arm
+      radio.startReceive();
     }
-    vTaskDelay(pdMS_TO_TICKS(5));
+    vTaskDelay(pdMS_TO_TICKS(1));
   }
 }
 
