@@ -57,8 +57,10 @@ function renderRealtimeChart() {
     chart: { type:'line' },
     title: { text: 'Dữ liệu rung động (Gia tốc & Tốc độ góc)' },
     xAxis: {
+      type: 'datetime',
       categories: [],
-      title: { text: 'Thời điểm' }
+      title: { text: 'Thời điểm' },
+      tickPixelInterval: 100,  
     },
     yAxis: [
       { // Y LEFT – ACC
@@ -76,6 +78,11 @@ function renderRealtimeChart() {
     legend: { enabled:true },
     credits: { enabled:false },
     exporting:{ enabled:true },
+    tooltip: {
+      // Tooltip hiển thị HH:mm, có thể thêm giây nếu muốn
+      xDateFormat: '%H:%M',       // chỉ giờ:phút
+      shared: true
+    },
     series: [
       { name: 'Ax', data: [] },
       { name: 'Ay', data: [] },
@@ -157,71 +164,6 @@ function renderRealtimeChart() {
   addEyeToggle(chart_acc_node2);
   addEyeToggle(chart_acc_node3);
 }
-function updateAccelChart(sample) {
-  /* Hiển thị Acc cho từng node */
-  const chart_acc_node1 = Highcharts.charts[0];
-
-  chart_acc_node1.xAxis[0].categories.push(sample.time);
-  chart_acc_node1.series[0].addPoint(sample.ax, false);
-  chart_acc_node1.series[1].addPoint(sample.ay, false);
-  chart_acc_node1.series[2].addPoint(sample.az, false);
-  
-  chart_acc_node1.series[3].addPoint(sample.gx, false);
-  chart_acc_node1.series[4].addPoint(sample.gy, false);
-  chart_acc_node1.series[5].addPoint(sample.gz, false);
-
-  const chart_acc_node2 = Highcharts.charts[1];
-
-  chart_acc_node2.xAxis[0].categories.push(sample.time);
-  chart_acc_node2.series[0].addPoint(sample.ax, false);
-  chart_acc_node2.series[1].addPoint(sample.ay, false);
-  chart_acc_node2.series[2].addPoint(sample.az, false);
-  chart_acc_node2.series[3].addPoint(sample.gx, false);
-  chart_acc_node2.series[4].addPoint(sample.gy, false);
-  chart_acc_node2.series[5].addPoint(sample.gz, false);
-
-  const chart_acc_node3 = Highcharts.charts[2];
-
-  chart_acc_node3.xAxis[0].categories.push(sample.time);
-  chart_acc_node3.series[0].addPoint(sample.ax, false);
-  chart_acc_node3.series[1].addPoint(sample.ay, false);
-  chart_acc_node3.series[2].addPoint(sample.az, false);
-  chart_acc_node3.series[3].addPoint(sample.gx, false);
-  chart_acc_node3.series[4].addPoint(sample.gy, false);
-  chart_acc_node3.series[5].addPoint(sample.gz, false);
-
-  chart_acc_node1.redraw();
-  chart_acc_node2.redraw();
-  chart_acc_node3.redraw();
-
-  /* Hiện thị Gyro cho từng node */
-  
-}
-function generateAccelSample() {
-  const ax = +(Math.random() * 0.2 - 0.1).toFixed(3);
-  const ay = +(Math.random() * 0.2 - 0.1).toFixed(3);
-  const az = +(0.98 + Math.random() * 0.05).toFixed(3);
-
-  const gx = +(Math.random()*20 - 10).toFixed(1);
-  const gy = +(Math.random()*20 - 10).toFixed(1);
-  const gz = +(Math.random()*20 - 10).toFixed(1);
-
-  return {
-    time: new Date().toLocaleTimeString(),
-    ax,
-    ay,
-    az,
-    gx,
-    gy,
-    gz
-  };
-}
-/* // Tạo chart mẫu (cũ) & auto cập nhật mỗi giây bằng dữ liệu giả
-renderRealtimeChart();
-setInterval(() => {
-  const sample = generateAccelSample(); // 1. lấy dữ liệu mới
-  updateAccelChart(sample);             // 2. update chart
-}, 1000); */
 
 document.addEventListener('DOMContentLoaded', () => {
   renderRealtimeChart(); // creates the 3 charts
@@ -236,11 +178,8 @@ function getChartByNodeIndex(nodeIndex) {
   return Highcharts.charts.find(c => c && c.renderTo && c.renderTo.id === targetId) || null;
 }
 
-const MAX_POINTS = 500;
+const MAX_POINTS = 50 ;
 
-// chartKey: 'accX'|'accY'|'accZ'|'gyroX'|'gyroY'|'gyroZ'
-// nodeIndex: 0-based (N01->0, N02->1, N03->2)
-// value: số
 window.updateChart = function(chartKey, nodeIndex, value) {
   
   // console.log("[UPDATE]", chartKey, "node", nodeIndex, "val", value);
@@ -255,16 +194,28 @@ window.updateChart = function(chartKey, nodeIndex, value) {
   chart.series[sIdx].addPoint(value, false);
 
   // Nhãn thời gian: dùng local time (nếu muốn dùng ts từ JSON, có thể sửa để nhận timeLabel)
-  const timeLabel = new Date().toLocaleTimeString();
-  chart.xAxis[0].categories.push(timeLabel);
+  // const timeLabel = new Date().toLocaleTimeString('vi-VN', {
+  //   hour: '2-digit',
+  //   minute: '2-digit'
+  // });
 
+  const timeLabel = new Date().toLocaleTimeString();
+  const categories = chart.xAxis[0].categories;
+  if (categories[categories.length - 1] !== timeLabel) {
+    chart.xAxis[0].categories.push(timeLabel);
+  }
+  else
+  {
+    chart.xAxis[0].categories.push('');
+  }
   // Giới hạn điểm để giữ hiệu năng
   if (chart.series[sIdx].data.length > MAX_POINTS) chart.series[sIdx].removePoint(0, false);
-  if (chart.xAxis[0].categories.length > MAX_POINTS) chart.xAxis[0].categories.shift();
+  // if (chart.xAxis[0].categories.length > MAX_POINTS) chart.xAxis[0].categories.shift();
 
   chart.redraw();
 };
 
+/* Ẩ/hiện acc và gyro */
 function addEyeToggle(chart) {
   let accVisible = true;
   let gyroVisible = true;
@@ -307,7 +258,7 @@ function addEyeToggle(chart) {
 }
 /*================END DISLAY CHART ACC================= */
 
-/* Thu nhỏ char */
+/* Thu nhỏ chart */
 function toggleNode(nodeId, arrow) {
   const node = document.getElementById(nodeId);
 
@@ -324,7 +275,7 @@ function toggleNode(nodeId, arrow) {
 /*================SUMMARY REPORT================= 
       Giả lập data để hiển thị tổng hợp 
 =============================================== */
-const summaryIMURowsMock = [
+/* const summaryIMURowsMock = [
   { time: '14:03:30 31/08/2025', name_node: 1, ax: 0.035, ay: -0.012, az: 0.985, gx:  3.1, gy: -2.4, gz:  1.0, temp: 28.6 },
   { time: '14:02:30 31/08/2025', name_node: 2, ax: 0.081, ay:  0.020, az: 0.990, gx:  6.8, gy:  4.1, gz: -3.0, temp: 28.4 },
   { time: '14:01:30 31/08/2025', name_node: 3, ax: 0.022, ay: -0.018, az: 0.978, gx: -1.2, gy:  0.9, gz:  2.5, temp: 28.3 },
@@ -333,32 +284,13 @@ const summaryIMURowsMock = [
   { time: '13:58:30 31/08/2025', name_node: 3, ax: 0.040, ay: -0.022, az: 0.979, gx: -2.0, gy:  1.0, gz:  4.2, temp: 28.2 },
   { time: '13:57:30 31/08/2025', name_node: 1, ax: 0.033, ay:  0.014, az: 0.981, gx:  1.8, gy: -0.7, gz:  2.0, temp: 28.1 },
   { time: '13:56:30 31/08/2025', name_node: 2, ax: 0.025, ay: -0.011, az: 0.980, gx: -0.9, gy:  0.3, gz:  1.1, temp: 28.1 },
-];
+]; */
 
 /* Định dạng số an toàn */
 function fmtSafe(v, nd=2) {
   if (v === null || v === undefined || Number.isNaN(v)) return '—';
   return Number(v).toFixed(nd);
 }
-
-/* function renderSummaryIMUTable(rows = summaryIMURowsMock) {
-  const body = document.getElementById('summary-table-body');
-  if (!body) return;
-
-  body.innerHTML = rows.map(r => `
-    <div class="table-row">
-      <div>${r.time}</div>
-      <div>${fmt(r.name_node,0)}</div>
-      <div>${fmt(r.ax, 3)}</div>
-      <div>${fmt(r.ay, 3)}</div>
-      <div>${fmt(r.az, 3)}</div>
-      <div>${fmt(r.gx, 1)}</div>
-      <div>${fmt(r.gy, 1)}</div>
-      <div>${fmt(r.gz, 1)}</div>
-      <div>${fmt(r.temp, 1)}</div>
-    </div>
-  `).join('');
-} */
 
 /* Export CSV (Excel mở trực tiếp) */
 function exportSummaryIMUCSV(rows = summaryIMURowsMock) {
@@ -375,20 +307,6 @@ function exportSummaryIMUCSV(rows = summaryIMURowsMock) {
   a.click();
   URL.revokeObjectURL(url);
 }
-
-/* document.addEventListener('DOMContentLoaded', () => {
-  renderSummaryIMUTable(summaryIMURowsMock);
-
-  const btn = document.getElementById('btn-export-summary');
-  if (btn) btn.addEventListener('click', () => exportSummaryIMUCSV());
-
-  const sel = document.getElementById('summary-device');
-  if (sel) sel.addEventListener('change', () => {
-    // TODO: lọc theo node nếu có dữ liệu thật
-    renderSummaryIMUTable(summaryIMURowsMock);
-  });
-}); */
-
 
 window.appendSummaryRow = function(sample) {
   const body = document.getElementById('summary-table-body');
