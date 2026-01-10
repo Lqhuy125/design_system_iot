@@ -6,6 +6,8 @@ TaskHandle_t  hSensor, hTel, hTransmit;
 SemaphoreHandle_t gI2CMutex;
 SemaphoreHandle_t gLoraMutex;
 
+int counter = 0;
+
 void setup() {
   Serial.begin(115200);
 
@@ -22,20 +24,20 @@ void setup() {
   gPoseQueue = xQueueCreate(/*length=*/128, sizeof(IMUSample));
 
   /* reate tasks, pin to cores (ESP32: core 0 & 1) */
-  xTaskCreatePinnedToCore(sensor_task,        /* Name of task function  */
-                          "SensorTask",       /* Name task */
-                          4096,               /* usStackDepth */
-                          (void*)gPoseQueue,  /* Queue handler, name Queue to refer */
-                          3,                  /* Priority */
-                          &hSensor,           /* Task hander */
-                          0);                 /* Core ID */
-  xTaskCreatePinnedToCore(telemetry_task,
-                          "TelemetryTask",
-                          4096, 
-                          nullptr,          
-                          1, 
-                          &hTel,    
-                          1);
+  // xTaskCreatePinnedToCore(sensor_task,        /* Name of task function  */
+  //                         "SensorTask",       /* Name task */
+  //                         4096,               /* usStackDepth */
+  //                         (void*)gPoseQueue,  /* Queue handler, name Queue to refer */
+  //                         3,                  /* Priority */
+  //                         &hSensor,           /* Task hander */
+  //                         0);                 /* Core ID */
+  // xTaskCreatePinnedToCore(telemetry_task,
+  //                         "TelemetryTask",
+  //                         4096, 
+  //                         nullptr,          
+  //                         1, 
+  //                         &hTel,    
+  //                         1);
 
   Serial.println("RTOS pipeline started: Sensor->Transmit");
 
@@ -43,10 +45,21 @@ void setup() {
 
 void loop() {
   // RTOS tasks chạy riêng; loop() có thể để trống
-  // vTaskDelay(pdMS_TO_TICKS(1000));
-
+  vTaskDelay(pdMS_TO_TICKS(1000));
+  
   /* Run without RTOS*/
-  // transmit_without_rtos();
+  transmit_without_rtos();
+    // Serial.print("Sending packet: ");
+    // Serial.println(counter);
+
+    // LoRa.beginPacket();   //Send LoRa packet to receiver
+    // LoRa.print("hello ");
+    // LoRa.print(counter);
+    // LoRa.endPacket();
+
+    // counter++;
+
+    // delay(500);
   /* RecieveData(); */
 
 }
@@ -82,23 +95,25 @@ void telemetry_task(void* pv) {
 void transmit_without_rtos()
 {
   IMUSample s;
+  SensorData data;
+  data = {1, 2, 3, 4, 5, 6, 7, 8, 0};
   if (sensor_read(&s) == 0)
   {
     static uint32_t lastPrint = 0;
     if (millis() - lastPrint >= 50) {
       lastPrint = millis();
 
-      lora_send_imusample(s);
+      lora_send_imusample(s, data);
 
-      Serial.print("  id: ");  Serial.print(s.id);
-      Serial.print("  ax_n: ");  Serial.print(s.ax, 3);
-      Serial.print("  ay_n: ");  Serial.print(s.ay, 3);
-      Serial.print("  az_n: ");  Serial.print(s.az, 3);
-      Serial.print("  gx: ");  Serial.print(s.gx, 3);
-      Serial.print("  gy: ");  Serial.print(s.gy, 3);
-      Serial.print("  gz: ");  Serial.print(s.gz, 3);
-      Serial.print("  t(ms): "); Serial.println(s.dt * 1000.0f, 2);
-      Serial.print(" time(s): "); Serial.println(s.t_s, 3);
+      // Serial.print("  id: ");  Serial.print(s.id);
+      // Serial.print("  ax_n: ");  Serial.print(s.ax, 3);
+      // Serial.print("  ay_n: ");  Serial.print(s.ay, 3);
+      // Serial.print("  az_n: ");  Serial.print(s.az, 3);
+      // Serial.print("  gx: ");  Serial.print(s.gx, 3);
+      // Serial.print("  gy: ");  Serial.print(s.gy, 3);
+      // Serial.print("  gz: ");  Serial.print(s.gz, 3);
+      // Serial.print("  t(ms): "); Serial.println(s.dt * 1000.0f, 2);
+      // Serial.print(" time(s): "); Serial.println(s.t_s, 3);
     } 
 
   }

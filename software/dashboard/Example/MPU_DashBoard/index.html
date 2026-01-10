@@ -1,0 +1,207 @@
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <script src="https://code.highcharts.com/highcharts.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <script src="https://code.highcharts.com/modules/series-label.js"></script>
+  <script src="https://code.highcharts.com/modules/exporting.js"></script>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- App styles -->
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- MQTT service -->
+  <script src=https://unpkg.com/mqtt/dist/mqtt.min.js></script>
+
+</head>
+<body>
+  <!-- App bar -->
+  <header class="appbar">
+    <div class="brand">
+      <div class="logo">EP</div>
+      <div>Bridge SHM</div>
+    </div>
+    <nav class="tabs">
+      <button class="tab active" data-tab="overview">Tổng quan theo khu vực</button>
+      <button class="tab" data-tab="alerts">Cảnh báo</button>
+      <button class="tab" data-tab="map">Bản đồ</button>
+    </nav>
+    <div class="spacer"></div>
+  </header>
+
+  <main class="container">
+    <!-- KPI -->
+    <section class="kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-icon">🛰️</div>
+        <div class="kpi-content">
+          <div class="kpi-title">Tổng số nodes <span class="kpi-view" data-action="view-online">View</span></div>
+          <div class="kpi-value" id="kpi-total">—</div>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon">🟢</div>
+        <div class="kpi-content">
+          <div class="kpi-title">Số Nodes Online <span class="kpi-view" data-action="view-online">View</span></div>
+          <div class="kpi-value" id="kpi-online">—</div>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon">⛔</div>
+        <div class="kpi-content">
+          <div class="kpi-title">Số Nodes Offline <span class="kpi-view" data-action="view-online">View</span></div>
+          <div class="kpi-value" id="kpi-offline">—</div>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon danger">⚠️</div>
+        <div class="kpi-content">
+          <div class="kpi-title">Số Nodes cảnh báo<span class="kpi-view" data-action="view-online">View</span></div>
+          <div class="kpi-value" id="kpi-warnings">—</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Real-time charts -->
+    
+    <!-- Khu vực 1: danh sách node + trạng thái -->
+    <section class="section" id="area-1-table-section">
+      <div class="section-header">
+        Danh sách node (Khu vực 1)
+        <div class="section-tools">
+          <button class="btn icon" id="btn-area-1-table-refresh" title="Làm mới">🔄</button>
+        </div>
+      </div>
+      
+      <div class="table">
+        <div class="table-head">
+          <div>#</div>
+          <div>Node ID</div>
+          <div>Tên vị trí</div>
+          <div>Nhịp/Trụ</div>
+          <div>Trạng thái</div>
+          <div>Pin</div>
+          <div>Nhiệt độ</div>
+        </div>
+        <div class="table-body" id="area-1-table-body"></div>
+      </div>
+    </section>
+
+    <!-- Chart data for each nodes -->
+    <section class="section">
+      <div class="section-header node-header">
+        Node 1
+        <span class="toggle-node" onclick="toggleNode('node1', this)">▶</span>
+      </div>
+      <section class="section node-content" id="node1">
+        <div id="chart-realtime-acc-node1" style="height:300px;"></div>
+      </section>
+    </section>
+
+    <section class="section">
+      <div class="section-header node-header">
+        Node 2
+        <span class="toggle-node" onclick="toggleNode('node2', this)">▶</span>
+      </div>
+      <section class="section node-content" id="node2">
+        <div id="chart-realtime-acc-node2" style="height:300px;"></div>
+      </section>
+    </section>
+
+    <section class="section">
+      <div class="section-header node-header">
+        Node 3
+        <span class="toggle-node" onclick="toggleNode('node3', this)">▶</span>
+      </div>
+      <section class="section node-content" id="node3">
+        <div id="chart-realtime-acc-node3" style="height:300px;"></div>
+      </section>
+    </section>
+
+    <!-- <section class="section" id="summary-section">
+      <div class="section-header">
+        <div>Tổng hợp dữ liệu SHM</div>
+        <div class="section-tools"> -->
+          <!-- Bộ chọn node (tuỳ chọn) -->
+          <!-- <select id="summary-device" class="btn" style="min-width:160px">
+            <option value="N01">Node N01</option>
+            <option value="N02">Node N02</option>
+            <option value="N03">Node N03</option>
+          </select>
+          <button id="btn-export-summary" class="btn primary">Export Excel</button>
+          <a id="btn-view-report" class="btn" href="#" title="Xem báo cáo">Xem báo cáo</a>
+        </div>
+      </div>
+
+      <div class="table table-summary">
+        <div class="table-head">
+          <div>Thời gian</div>
+          <div>Gia tốc RMS (g)</div>
+          <div>Vận tốc RMS (mm/s)</div>
+          <div>Dịch chuyển RMS (µm)</div>
+          <div>Nhiệt độ (°C)</div>
+          <div>Pin (%)</div>
+          <div>Trạng thái</div>
+          <div>Cảnh báo biên độ</div>
+          <div>Cảnh báo phổ tần</div>
+        </div>
+        <div class="table-body" id="summary-table-body"></div>
+      </div>
+    </section> -->
+
+<!-- ======= Tổng hợp dữ liệu (Acc / Gyro / Nhiệt độ) ======= -->
+    <section class="section" id="summary-section">
+      <div class="section-header">
+        <div>Tổng hợp dữ liệu</div>
+        <div class="section-tools">
+          <!-- Bộ chọn node (tuỳ chọn) -->
+          <button class="btn icon" id="btn-summary-report-table-refresh" title="Làm mới">🔄</button>
+          <select id="summary-device" class="btn" style="min-width:160px">
+            <option value="N01">Node N01</option>
+            <option value="N02">Node N02</option>
+            <option value="N03">Node N03</option>
+          </select>
+          <button id="btn-export-summary" class="btn primary">Export Excel</button>
+        </div>
+      </div>
+
+      <div class="table table-summary">
+        <div class="table-head">
+          <div>Thời gian</div>
+          <div>Node</div>
+          <div>Ax(g)</div>
+          <div>Ay(g)</div>
+          <div>Az(g)</div>
+          <div>Gx(°/s)</div>
+          <div>Gy(°/s)</div>
+          <div>Gz(°/s)</div>
+          <div>Temp(°C)</div>
+        </div>
+        <div class="table-body" id="summary-table-body"></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-header"> Cấu hình cảnh báo
+      </div>
+    </section>
+    <!-- Map placeholder (cầu) -->
+    <section class="section">
+      <div class="section-header">Bản đồ node trên cầu (layout đơn giản)</div>
+      <div class="bridge-layout" id="bridge-layout"></div>
+    </section>
+
+  </main>
+
+  <!-- Scripts -->
+  <script src="app.js"></script>
+  <script src="mqttHandler.js"></script>
+</body>
+</html>
+  <title>Bridge SHM — MPU6050 Dashboard</title>
+
+  <!-- Highcharts -->

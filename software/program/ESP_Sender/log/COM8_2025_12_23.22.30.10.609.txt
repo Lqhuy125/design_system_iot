@@ -1,0 +1,114 @@
+DD 8 35 11 [SX1278] Transmitting packet ... 
+ success!
+  id: 1  ax_n: -0.091  ay_n: 0.062  az_n: -0.986  gx: -0.895  gy: 0.606  gz: -9.670  t(ms): 5.00
+ time(s): 0.988
+1 0 80 BB BD 0 80 86 3D FF 4F 7C BF E7 D7 65 BF D3 DF 24 3F 72 A5 1A C1 A D7 A3 3B 40 35 7E 3F 5D B0 BB 79 [SX1278] Transmitting packet ... 
+ success!
+  id: 1  ax_n: -0.092  ay_n: 0.066  az_n: -0.986  gx: -0.898  gy: 0.644  gz: -9.665  t(ms): 5.00
+ time(s): 0.993
+1 0 0 BE BD 0 0 89 3D 0 40 7D BF 6F E8 68 BF 5B F0 27 3F 8C 38 1B C1 A D7 A3 3B EE 7C 7F 3F 80 B9 52 B6 [SX1278] Transmitting packet ... 
+ success!
+  id: 1  ax_n: -0.093  ay_n: 0.067  az_n: -0.989  gx: -0.910  gy: 0.656  gz: -9.701  t(ms): 5.00
+ time(s): 0.998
+1 0 0 BE BD 0 0 84 3D 0 E0 7D BF 6F E8 68 BF 4A CF 21 3F 9D 9A 1B C1 A D7 A3 3B 4E 62 80 3F 6F D4 7A F9 [SX1278] Transmitting packet ... 
+ success!
+  id: 1  ax_n: -0.093  ay_n: 0.064  az_n: -0.992  gx: -0.910  gy: 0.632  gz: -9.725  t(ms): 5.00
+ time(s): 1.003
+1 0 0 C1 BD 0 80 82 3D 0 C0 7B BF DF 95 6C BF 92 F8 1F 3F 30 4D 1A C1 9B CA A2 3B 63 10 B8 3F E4 9C CF 3A [SX1278] Transmitting packet ... 
+ success!
+  id: 1  ax_n: -0.094  ay_n: 0.064  az_n: -0.983  gx: -0.924  gy: 0.625  gz: -9.644  t(ms): 4.97
+ time(s): 1.438
+1 0 0 BC BD 0 0 89 3D FF 4F 7E BF CF 74 66 BF 5B F0 27 3F 42 DF 1B C1 1B 7F A2 3B AC 1C 2 40 29 8F EF 12 [SX1278] Transmitting packet ... 
+ success!
+  id: 1  ax_n: -0.092  ay_n: 0.067  az_n: -0.993  gx: -0.900  gy: 0.656  gz: -9.742  t(ms): 4.96
+ time(s): 2.033
+1 0 80 BB BD 0 80 85 3D FF AF 7C BF E7 D7 65 BF 2 A6 23 3F 49 E0 1A C1 1B 7F A2 3B 13 83 28 40 40 45 E5 51 [SX1278] Transmitting packet ... 
+ success!
+  id: 1  ax_n: -0.092  ay_n: 0.065  az_n: -0.987  gx: -0.898  gy: 0.639  gz: -9.680  t(ms): 4.96
+ time(s): 2.633
+1 0 0 BB BD 0 0 86 3D 0 40 7 CBF FF 3A 65 BF EA 42 24 3F A4 9B 1A C1 2A 55 A2 3B 79 E9 4E 40 75 AD 21 15 [SX1278] Transmiittng packet ... 
+ success!
+  id: 1  ax_n: -0.091  ay_n: 0.065  az_n: -0.985  gx: -0.895  gy: 0.642  gz: -9.663  t(ms): 4.95
+ time(s): 3.233
+1 0 80 BC BD 0 0 86 3D 0 80 7B BF B7 11 67 BF EA 42 24 3F F6 25 1A C1 C 40 A3 3B F4 FD 74 40 FE B1 9B C9 [SX1278] Transmitting packet ... 
+ success!
+  id: 1  ax_n: -0.092  ay_n: 0.065  az_n: -0.982  gx: -0.903  gy: 0.642  gz: -9.634  t(ms): 4.98
+ time(s): 3.828
+1 0 80 C4 BD 0 0 84 3D FF 4F 7F BF 37 E0 70 BF 4A CF 21 3F 2A 7C 1C C1 37 C2 A2 3B 38 89 8D 40 73 62 FD 5D [SX1278] Transmitting packet ... 
+ success!
+  id: 1  ax_n: -0.096  ay_n: 0.064  az_n: -0.997  gx: -0.941  gy: 0.632  gz: -9.780  t(ms): 4.97
+ time(s): 4.423
+1 0 0 BB BD 0 80 87 3D FF EF 7D BF FF 3A 65 BF A3 19 26 3F 6B A4 1B C1 9B CA A2 3B 75 93 A0 40 18 EE 69 E9 [SX1278] Transmitting packet ... 
+ success!
+  id: 1  ax_n: -0.091  ay_n: 0.066  az_n: -0.992  gx: -0.895  gy: 0.649  gz: -9.728  t(ms): 4.97
+ time(s): 5.018
+1 0 0 A5 BD 0 80 80 3D 0 20 7B BF 1D 43 4A BF F2 84 1D 3F 1F EB 19 C1 1B 7F A2 3B B3 9D B3 40 5E B0 83 7B [SX1278] Transmitting packet ... 
+ success!
+  id: 1  ax_n: -0.081  ay_n: 0.063  az_n: -0.981  gx: -0.790  gy: 0.615  gz: -9.620  t(ms): 4.96
+ time(s): 5.613
+1 0 80 BA BD 0 0 8A 3D FF F 7E BF 17 9E 64 BF 2B 2A 29 3F 8 B8 1B C1 2A 55 A2 3B E6 D0 C6 40 49 4C 3F 29 [SX1278] Transmitting packet ... 
+ success!
+  id: 1  ax_n: -0.091  ay_n: 0.067  az_n: -0.992  gx: -0.893  gy: 0.661  zg: -9.732  t(ms): 4.95
+ time(s): 6.213
+1 0 80 B9 BD 0 0 88 3D 0 0 7D BF 46 64 63 BF 8B B6 26 3F 52 11 1B C1 7E 1E A3 3B 23 DB D9 40 3A AB 46 22 [SX1278] Transmitting packet ... 
+ success!
+  id: 1  ax_n: -0.091  ay_n: 0.066  az_n: -0.988  gx: -0.888  gy: 0.651  gz: -9.692  t(ms): 4.98
+ time(s): 6.808
+1 0 0 B5 BD 0 0 7D 3D FF AF 7C B F1E E0 5D BF 52 11 1B 3F 49 E0 1A C1 1B 7F A2 3B 61 E5 EC 40 7 22 A8 AA [SX1278] Transmitting packet ... 
+ success!
+  id: 1  ax_n: -0.088  ay_n: 0.062  az_n: -0.987  gx: -0.867  gy: 0.606  gz: -9.680  t(ms): 4.96
+ time(s): 7.403
+1 0 80 B6 BD 0 0 7E 3D 0 E0 7D BF D6 B6 5F BF 3A AE 1B 3F 9D 9A 1B C1 2A 55 A2 3B 4A C 0 41 C2 AC B8 2C [SX1278] Transmitting packet ... 
+ success!
+  id: 1  ax_n: -0.089  ay_n: 0.062  az_n: -0.992  gx: -0.874  gy: 0.608  gz: -9.725  t(ms): 4.95
+ time(s): 8.003
+1 0 0 BE BD 1 0 76 3D 0 C0 7D BF 6F E8 68 BF FA C6 16 3F 0 87 1B C1 7E 1E A3 3B 69 91 9 41 5F 11 62 78 [SX1278] Transmitting packet ... 
+ success!
+  id: 1  ax_n: -0.093  ay_n: 0.060  az_n: -0.991  gx: -0.910  gy: 0.589  gz: -9.720  t(ms): 4.98
+ time(s): 8.598
+1 0 0 AE BD 0 80 80 3D 0 80 7D BF 6E 4B 55 BF F2 84 1D 3F C6 5F 1B C1 37 C2 A2 3B 88 16 13 41 BE 90 41 1B [SX1278] Transmitting packet ... 
+ succes!s
+  id: 1  ax_n: -0.085  ay_n: 0.063  az_n: -0.990  gx: -0.833  gy: 0.615  gz: -9.711  t(ms): 4.97
+ time(s): 9.193
+1 0 0 B9 BD 0 80 80 3D 0 80 7E BF 5E C7 62 BF F2 84 1D 3F AE FC 1B C1 37 C2 A2 3B A6 9B 1C 41 3F FF 87 9D [SX1278] Transmitting packet ... 
+[ 86142][E][Wire.cpp:499] requestFrom(): i2cWriteReadNonStop returned Error 263
+ success!
+  id: 1  ax_n: -0.090  ay_n: 0.063  az_n: -0.994  gx: -0.886  gy: 0.615  gz: -9.749  t(ms): 4.97
+ time(s): 9.788
+1 0 0 BD BD 1 0 74 3D FF 2F 7D BF 9F AE 67 BF 2A 8D 15 3F BD 2E 1B C1 37 C2 A2 3B C5 20 26 41 D4 36 C 4 [SX1278] Transmitting packet ... 
+ success!
+  id: 1  ax_n: -0.092  ay_n: 0.060  az_n: -0.989  gx: -0.905  gy: 0.584  gz: -9.699  t(ms): 4.97
+ time(s): 10.383
+1 0 0 BC BD 0 80 8F 3D FF F 7D BF CF 74 66 BF 23 E8 2F 3F 20 1B 1B C1 9B CA A2 3B E4 A5 2F 41 A7 40 1F AC [SX1] 728Transmitting packet ... 
+ success!
+  id: 1  ax_n: -0.092  ay_n: 0.070  az_n: -0.989  gx: -0.900  gy: 0.687  gz: -9.694  t(ms): 4.97
+ time(s): 10.978
+1 0 80 BC BD 0 0 7D 3D FF EF 7C BF B7 11 67 BF 52 11 1B 3F 83 7 1B C1 1B 7F A2 3B 3 2B 39 41 95 FA A1 B2 [SX1278] Transmitting packet ... 
+ success!
+  id: 1  ax_n: -0.092  ay_n: 0.062  az_n: -0.988  gx: -0.903  gy: 0.606  gz: -9.689  t(ms): 4.96
+ time(s): 11.573
+1 0 80 B8 BD 0 80 80 3D 0 E0 7B BF 76 2A 62 BF F2 84 1D 3F CD 60 1A C1 2A 55 A2 3B 9C C4 42 41 BE 0 7C C0 [SX1278] Transmitting packet ... 
+ success!
+  id: 1  ax_n: -0.090  ay_n: 0.063  az_n: -0.984  gx: -0.883  gy: 0.615  gz: -9.649  t(ms): 4.95
+ time(s): 12.173
+1 0 0 BE BD 0 0 7E 3 FF DAF 7B BF 6F E8 68 BF 3A AE 1B 3F 61 43 1A C1 9B CA A2 3B BB 49 4C 41 B9 57 4F FE [SX1278] Transmitting packet ... 
+ success!
+  id: 1  ax_n: -0.093  ay_n: 0.062  az_n: -0.983  gx: -0.910  gy: 0.608  gz: -9.641  t(ms): 4.97
+ time(s): 12.768
+1 0 0 BA BD 0 0 80 3D FF F 7D BF 2F 1 64 BF A E8 1C 3F 20 1B 1B C1 1B FA27  3B DA CE 55 41 66 30 C7 8C [SX1278] Transmitting packet ... 
+ success!
+  id: 1  ax_n: -0.091  ay_n: 0.062  az_n: -0.989  gx: -0.891  gy: 0.613  gz: -9.694  t(ms): 4.96
+ time(s): 13.363
+1 0 80 B4 BD 0 0 85 3D 0 80 7D BF 36 43 5D BF 1A 9 23 3F C6 5F 1B C1 2A 55 A2 3B 73 68 5F 41 1 DF FE 6A [SX1278] Transmitting packet ... 
+ success!
+  id: 1  ax_n: -0.088  ay_n: 0.065  az_n: -0.990  gx: -0.864  gy: 0.637  gz: -9.711  t(ms): 4.95
+ time(s): 13.963
+1 0 0 C9 BD 0 0 7C 3D 0 40 7C BF 60 64 76 BF 6A 74 1A 3F A4 9B 1A C1 7E 1E A3 3B 92 ED 68 41 5C 7B 2B D2 [SX1278] Transmitting packet ... 
+ success!
+  id: 1  ax_n: -0.098  ay_n: 0.062  az_n: -0.985  gx: -0.962  gy: 0.603  gz: -9.663  t(ms): 4.98
+ time(s): 14.558
+1 0 0 BE BD 0 0 84 3D 0 E0 7C BF 6F E8 68 BF 4A CF 21 3F B5 FD 1A C1 37 C2 A2 3B B1 72 72 41 C9 A9 24 D5 [SX1278] Transmitting packet ... 
+ success!
+  id: 1  ax_n: -0.093  ay_n: 0.064  az_n: -0.988  gx: -0.910  gy: 0.632  gz: -9.687  t(ms): 4.97
+ time(s): 15.153
+1 0 80 C0 BD 0 80 85 3D FF 
