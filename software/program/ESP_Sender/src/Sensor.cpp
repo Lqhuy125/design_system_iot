@@ -56,15 +56,19 @@ int sensor_read(IMUSample* out)
 void sensor_task(void* pv) 
 {
   QueueHandle_t q = (QueueHandle_t)pv;
-  const TickType_t periodTicks = pdMS_TO_TICKS(5); //  const TickType_t periodTicks = pdMS_TO_TICKS(5); // ~200 Hz
+  const TickType_t periodTicks = pdMS_TO_TICKS(80); //  const TickType_t periodTicks = pdMS_TO_TICKS(5); // ~200 Hz
   TickType_t lastWake = xTaskGetTickCount();
 
   for (;;) {
     IMUSample s;
+    /* uint8_t max = 3;
+    uint8_t min = 1;
+    uint8_t num = (rand() % (max - min + 1)) + min; */
     s.id = 1;
     if (sensor_read(&s) == 0) {
       // gửi vào queue (không block quá lâu)
-      xQueueSend(q, &s, 0);
+      /* xQueueSend(q, &s, 0); */
+      xQueueOverwrite(q, &s);
     }
     vTaskDelayUntil(&lastWake, periodTicks);
   }
