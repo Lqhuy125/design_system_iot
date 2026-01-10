@@ -23,11 +23,13 @@ IMUSample nodeData[MAX_NODES];
 /*===========================================================*/
 
 /*======================== VAR BEACON ========================*/
-
 TDMA_BeaconConfig cfg;
-
 /*===========================================================*/
 
+/*======================== VAR MQTT ========================*/
+WiFiClient espClient;
+PubSubClient client(espClient);
+/*===========================================================*/
 void setup() {
   Serial.begin(9600);
 
@@ -155,5 +157,38 @@ void lora_process_task(void* pv) {
     }
     vTaskDelay(pdMS_TO_TICKS(1));
   }
+}
+
+void mqtt_push_task(void* pv) {
+  (void)pv;
+  IMUSample s;
+  uint32_t lastLoop = 0;
+  uint32_t lastPrint = 0;
+  uint32_t cnt_loop = 0;
+  for (;;) {
+    // 1) chờ sample cần publish
+    if (xQueueReceive(gMqttQueue, &s, portMAX_DELAY) == pdTRUE) {
+
+      if (millis() - lastPrint >= 50) {
+          lastPrint = millis();
+
+          if (!client.connected()){
+            reconnect();
+          }
+      }
+      if (client.connected())
+      {
+        publishNodeData(s);  
+      }
+    }
+
+    // 2) duy trì MQTT (keep-alive, callback...)
+    uint32_t now = millis();
+    if (now - lastLoop >= 100) {
+      lastLoop = now;
+      client.loop();
+    }
+    vTaskDelay(pdMS_TO_TICKS(5));
+  } 
 }
 /* ================================ */

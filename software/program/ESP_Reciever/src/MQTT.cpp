@@ -6,8 +6,8 @@
 extern QueueHandle_t gMqttQueue;
 
 // ==== WiFi / MQTT ====
-WiFiClient espClient;
-PubSubClient client(espClient);
+extern WiFiClient espClient;
+extern PubSubClient client;
 
 // ==== Config ====
 static const char* WIFI_SSID = "QUANGHUY";
@@ -97,40 +97,6 @@ void reconnect()
         delay(5000);
         }
     }
-}
-
-
-void mqtt_push_task(void* pv) {
-  (void)pv;
-  IMUSample s;
-  uint32_t lastLoop = 0;
-  uint32_t lastPrint = 0;
-  uint32_t cnt_loop = 0;
-  for (;;) {
-    // 1) chờ sample cần publish
-    if (xQueueReceive(gMqttQueue, &s, portMAX_DELAY) == pdTRUE) {
-
-      if (millis() - lastPrint >= 50) {
-          lastPrint = millis();
-
-          if (!client.connected()){
-            reconnect();
-          }
-      }
-      if (client.connected())
-      {
-        publishNodeData(s);  
-      }
-    }
-
-    // 2) duy trì MQTT (keep-alive, callback...)
-    uint32_t now = millis();
-    if (now - lastLoop >= 100) {
-      lastLoop = now;
-      client.loop();
-    }
-    vTaskDelay(pdMS_TO_TICKS(5));
-  } 
 }
 
 // ==== Helpers ====

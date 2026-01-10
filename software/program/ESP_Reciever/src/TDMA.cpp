@@ -69,7 +69,7 @@ uint8_t tdma_send_beacon_broadcast(
 void BeaconConfiguration()
 {  
   cfg.slot_len_ms   = 200;
-  cfg.total_slots   = 8;
+  cfg.total_slots   = 2;
   cfg.broadcast_mode= true;   // phát 1 beacon chung
   cfg.max_node_id   = 0;      // không dùng khi broadcast
   cfg.start_frame_id= 1;
