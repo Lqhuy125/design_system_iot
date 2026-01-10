@@ -116,10 +116,10 @@ void mqtt_push_task(void* pv) {
           if (!client.connected()){
             reconnect();
           }
-          if (client.connected())
-          {
-            publishNodeData(s);  
-          }
+      }
+      if (client.connected())
+      {
+        publishNodeData(s);  
       }
     }
 

@@ -17,12 +17,13 @@
 
 
 static const int IMU_PAYLOAD_LEN = 33;               // id + ax..gz + dt + t_s
-static const int IMU_TOTAL_LEN   = IMU_PAYLOAD_LEN + sizeof(uint32_t); // + CRC32 = 40
+static const int IMU_TOTAL_LEN   = IMU_PAYLOAD_LEN + sizeof(uint32_t); // + CRC32 = 37
 
+extern void publishNodeData(const IMUSample &d);
 
 void InitLora(void);
 
-static inline uint32_t calcCRC32(const void *data, size_t length);
+inline uint32_t calcCRC32(const void *data, size_t length);
 
 /* Send Lora */
 void lora_send_imusample(const IMUSample& s);
@@ -30,7 +31,8 @@ static int serializeIMUSample(const IMUSample& s, uint8_t* out);
 
 /* Recieve Lora */
 bool lora_receive_once(IMUSample &out);
-extern void publishNodeData(const IMUSample &d);
-void lora_rx_task(void* pv);
+void lora_process_task(void* pv);
+
+bool deserializeIMUSample(IMUSample &out, const uint8_t* buf, size_t len);
 
 #endif

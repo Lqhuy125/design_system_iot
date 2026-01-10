@@ -1,23 +1,24 @@
 #include "Custom_Lora.h"
 
-
+// flag to indicate transmission or reception state
+extern bool transmitFlag;
 // ====== ISR flag ======
-static volatile bool loraRxFlag = false;
-static void IRAM_ATTR onLoraRx() {
-  // Tuyệt đối KHÔNG print/khóa mutex trong ISR
-  loraRxFlag = true;
-}
+extern volatile bool operationDone;
+extern void IRAM_ATTR setFlag();
+
+// save transmission states between loops
+extern int transmissionState;
 
 /*  Declare variable */
-SX1278 radio = new Module(ss, dio0, rst);
+extern SX1278 radio;
 
-IMUSample nodeData[MAX_NODES];
+extern IMUSample nodeData[MAX_NODES];
 
 extern SemaphoreHandle_t gLoraMutex;
 
 extern QueueHandle_t gRxQueue;
 /* General Function */
-static inline uint32_t calcCRC32(const void *data, size_t length) {
+inline uint32_t calcCRC32(const void *data, size_t length) {
     const uint8_t *bytes = (const uint8_t*)data;
     uint32_t crc = 0xFFFFFFFF;   // initial value
 
@@ -47,10 +48,10 @@ void InitLora(void)
       while (true) { delay(10); }
     }
 
-    radio.setPacketReceivedAction(onLoraRx);
+    radio.setPacketReceivedAction(setFlag);
     
     // Arm nhận ở chế độ non-blocking
-    radio.startReceive();
+    // radio.startReceive(); /* Dont need this code in pingpong mode */
 
 }
 
@@ -174,7 +175,7 @@ bool lora_receive_once(IMUSample &out) {
   }
 }
 
-static bool deserializeIMUSample(IMUSample &out, const uint8_t* buf, size_t len) {
+bool deserializeIMUSample(IMUSample &out, const uint8_t* buf, size_t len) {
   // 1) lấy CRC cuối buffer (little-endian)
   uint32_t recv_crc;
   memcpy(&recv_crc, &buf[IMU_PAYLOAD_LEN], sizeof(recv_crc));
@@ -209,30 +210,5 @@ static bool deserializeIMUSample(IMUSample &out, const uint8_t* buf, size_t len)
   return true;
 }
 
-
-void lora_rx_task(void* pv) {
-  (void)pv;
-  uint8_t rxBuf[IMU_TOTAL_LEN];
-
-  for (;;) {
-    if (loraRxFlag) {
-      loraRxFlag = false;
-      IMUSample s;
-      int state = radio.readData(rxBuf, IMU_TOTAL_LEN);
-      if (state == RADIOLIB_ERR_NONE) {
-
-        bool check = deserializeIMUSample(s, rxBuf, IMU_TOTAL_LEN);
-        if (check) {      // <-- GÁN GIÁ TRỊ CHO S
-          if (xQueueSend(gRxQueue, &s, 0) != pdTRUE) {    // <-- GIỜ MỚI SEND
-            Serial.println("⚠️ gRxQueue full, drop sample");
-          }
-        }
-      }
-      // re-arm
-      radio.startReceive();
-    }
-    vTaskDelay(pdMS_TO_TICKS(1));
-  }
-}
 
 /* ========================End Recieve Data======================== */

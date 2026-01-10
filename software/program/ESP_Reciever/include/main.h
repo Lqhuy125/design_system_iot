@@ -13,11 +13,12 @@
 #include "freertos/task.h"
 #include "freertos/queue.h"
 
+#include "TDMA.h"
 /* Define the number of nodes in system */
 #define MAX_NODES 5
 
 /* Define the function of RTOS task */
-extern void lora_rx_task(void* pv);
+extern void lora_process_task(void* pv);
 extern void aggregator_task(void* pv);
 extern void mqtt_push_task(void* pv);
 
