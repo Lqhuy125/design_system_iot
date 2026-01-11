@@ -47,12 +47,6 @@ void InitLora(void)
       Serial.println(state);
       while (true) { delay(10); }
     }
-
-    radio.setPacketReceivedAction(setFlag);
-    
-    // Arm nhận ở chế độ non-blocking
-    // radio.startReceive(); /* Dont need this code in pingpong mode */
-
 }
 
 /* Send Data */
@@ -159,7 +153,7 @@ bool lora_receive_once(IMUSample &out) {
     out.crc = recv_crc;   // lưu lại CRC ứng dụng nếu struct có trường crc
 
     // (tuỳ chọn) in RSSI/SNR
-    // Serial.printf("[SX1278] RX OK size=%d RSSI=%d SNR=%.1f\n",
+    // Serial.println("[SX1278] RX OK size=%d RSSI=%d SNR=%.1f\n",
     //               IMU_TOTAL_LEN, radio.getRSSI(), radio.getSNR());
 
     return true;
@@ -204,7 +198,7 @@ bool deserializeIMUSample(IMUSample &out, const uint8_t* buf, size_t len) {
   out.crc = recv_crc;   // lưu lại CRC ứng dụng nếu struct có trường crc
 
   // (tuỳ chọn) in RSSI/SNR
-  // Serial.printf("[SX1278] RX OK size=%d RSSI=%d SNR=%.1f\n",
+  // Serial.println("[SX1278] RX OK size=%d RSSI=%d SNR=%.1f\n",
   //               IMU_TOTAL_LEN, radio.getRSSI(), radio.getSNR());
 
   return true;

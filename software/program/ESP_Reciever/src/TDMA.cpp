@@ -26,7 +26,7 @@ static inline TDMABeacon tdma_make_beacon(
     TDMABeacon b{};
     b.sync = 0xAA;
     b.frame_id = frame_id;
-    b.beacon_timestamp = (beacon_timestamp == 0) ? millis() : beacon_timestamp;
+    b.beacon_timestamp = millis();
     b.slot_len_ms = slot_len_ms;
     b.node_id = node_id;
     b.total_slots = total_slots;
@@ -68,8 +68,8 @@ uint8_t tdma_send_beacon_broadcast(
 
 void BeaconConfiguration()
 {  
-  cfg.slot_len_ms   = 200;
-  cfg.total_slots   = 2;
+  cfg.slot_len_ms   = 500;
+  cfg.total_slots   = 3;
   cfg.broadcast_mode= true;   // phát 1 beacon chung
   cfg.max_node_id   = 0;      // không dùng khi broadcast
   cfg.start_frame_id= 1;

@@ -18,9 +18,9 @@
 #define MAX_NODES 5
 
 /* Define the function of RTOS task */
-extern void lora_process_task(void* pv);
-extern void aggregator_task(void* pv);
-extern void mqtt_push_task(void* pv);
+void lora_process_task(void* pv);
+void tdma_scheduler_task(void* pv);
+void mqtt_push_task(void* pv);
 
 /* Define the function be used in program*/
 void transmit_without_rtos();
