@@ -62,20 +62,18 @@ bool lora_receive_beacon(TDMABeacon& out) {
   xSemaphoreTake(gLoraMutex, portMAX_DELAY);
   uint8_t buf[BEACON_TOTAL_LEN];
   int state = radio.readData(buf, BEACON_TOTAL_LEN);
-  if (state == RADIOLIB_ERR_NONE) {
-    if(ARRAY_SIZE(buf) == BEACON_TOTAL_LEN){
-      bool check = tdma_beacon_deserialize(out, buf, BEACON_TOTAL_LEN);
-      if (!check) {      // <-- GÁN GIÁ TRỊ CHO S
-        Serial.println("Deserialize error");
-        return false;
-      }
-    }
-    else
-    {
-      Serial.println("Error buffer");
-      return false;
-    }
+
+  if (state != RADIOLIB_ERR_NONE) return false;
+
+  int len = radio.getPacketLength();
+  if ((len != BEACON_TOTAL_LEN) || (buf[0] != 0xAA)) return false;
+
+  if (!tdma_beacon_deserialize(out, buf, BEACON_TOTAL_LEN)) 
+  {
+    Serial.println("Deserialize error");
+    return false;
   }
+  
   vTaskDelay(pdMS_TO_TICKS(2));
   xSemaphoreGive(gLoraMutex);
   return true;

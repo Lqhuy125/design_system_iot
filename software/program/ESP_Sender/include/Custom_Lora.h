@@ -18,7 +18,7 @@
 
 void InitLora(void);
 
-static inline uint32_t calcCRC32(const void *data, size_t length);
+uint32_t calcCRC32(const void *data, size_t length);
 
 /* Send Lora */
 void lora_send_imusample(const IMUSample& s);

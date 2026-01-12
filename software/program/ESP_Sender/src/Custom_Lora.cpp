@@ -1,13 +1,16 @@
 #include "Custom_Lora.h"
 
+/*======================== LORA STATE ========================*/
+
+// save transmission states between loops
+extern int transmissionState;
 /*  Declare variable */
-SX1278 radio = new Module(ss, dio0, rst);
-
-IMUSample nodeData[MAX_NODES];
-
+extern SX1278 radio;
+extern IMUSample nodeData[MAX_NODES];
 extern SemaphoreHandle_t gLoraMutex;
+
 /* General Function */
-static inline uint32_t calcCRC32(const void *data, size_t length) {
+uint32_t calcCRC32(const void *data, size_t length) {
     const uint8_t *bytes = (const uint8_t*)data;
     uint32_t crc = 0xFFFFFFFF;   // initial value
 
@@ -52,38 +55,36 @@ void lora_send_imusample(const IMUSample& s) {
   memcpy(&buffer[payload_len], &crc, sizeof(crc));
   int total_len = payload_len + sizeof(crc);
 
-  for (int i=0; i<sizeof(IMUSample); i++) {
+  /* for (int i=0; i<sizeof(IMUSample); i++) {
       Serial.print(buffer[i], HEX); Serial.print(" ");
-  }
+  } */
   // 4) Gửi qua LoRa
   xSemaphoreTake(gLoraMutex, portMAX_DELAY);
-  Serial.println(F("[SX1278] Transmitting packet ... "));
+  // Serial.println(F("[SX1278] Transmitting packet ... "));
   int state;
   state = radio.transmit((byte*)buffer, total_len);
-  // byte byteArr[] = {0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF};
-  //   int state = radio.transmit(byteArr, 8);
+ 
+  /* Time delay for switch TX -> RX */
+  radio.standby();
+  delayMicroseconds(3000);   // 2–5 ms
+  radio.startReceive();
 
   if (state == RADIOLIB_ERR_NONE) {
     // the packet was successfully transmitted
     Serial.println(F(" success!"));
 
-    // print measured data rate
-    /* Serial.print(F("[SX1278] Datarate:\t"));
-    Serial.print(radio.getDataRate());
-    Serial.println(F(" bps")); */
-
-  } else if (state == RADIOLIB_ERR_PACKET_TOO_LONG) {
+  /* } else if (state == RADIOLIB_ERR_PACKET_TOO_LONG) {
     // the supplied packet was longer than 256 bytes
     Serial.println(F("too long!"));
 
   } else if (state == RADIOLIB_ERR_TX_TIMEOUT) {
     // timeout occurred while transmitting packet
-    Serial.println(F("timeout!"));
+    Serial.println(F("timeout!")); */
 
   } else {
     // some other error occurred
     Serial.print(F("failed, code "));
-    Serial.println(state);
+    // Serial.println(state);
 
   }
   xSemaphoreGive(gLoraMutex);
@@ -126,9 +127,9 @@ static int deserializeIMUSample(IMUSample& s, const uint8_t *buffer) {
   memcpy(&s.t_s, &buffer[idx], sizeof(s.t_s));    idx += sizeof(s.t_s);
   memcpy(&s.crc, &buffer[idx], sizeof(s.crc));      idx += sizeof(s.crc);
 
-  for (int i=0; i<sizeof(IMUSample); i++) {
+  /* for (int i=0; i<sizeof(IMUSample); i++) {
       Serial.print(buffer[i], HEX); Serial.print(" ");
-  }
+  } */
   return idx;
 }
 
