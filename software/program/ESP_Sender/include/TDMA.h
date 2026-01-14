@@ -48,4 +48,7 @@ void TDMA_UpdateFromBeacon(const TDMABeacon& b);
 static  bool tdma_beacon_deserialize(const uint8_t* buf, size_t len, TDMABeacon& out);
 
 uint8_t tdma_choose_slot(uint8_t my_id, const TDMABeacon& b);
+
+extern void radio_config_beacon();
+extern void radio_config_uplink();
 #endif

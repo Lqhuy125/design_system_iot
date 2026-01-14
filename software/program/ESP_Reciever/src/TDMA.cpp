@@ -45,7 +45,9 @@ static inline uint8_t tdma_send_beacon(const TDMABeacon& b) {
   xSemaphoreTake(gLoraMutex, portMAX_DELAY);
   // Serialize struct thành mảng byte và transmit
   const uint8_t* raw = reinterpret_cast<const uint8_t*>(&b);
+  radio_config_beacon();
   int state = radio.transmit((byte*)raw, sizeof(TDMABeacon));
+  radio_config_uplink();
   uint8_t buff[15];
   xSemaphoreGive(gLoraMutex);
   for (int i=0; i<sizeof(TDMABeacon); i++) {

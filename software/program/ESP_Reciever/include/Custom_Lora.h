@@ -15,6 +15,18 @@
 #define rst 14
 #define dio0 2
 
+// --- PHY beacon (SX1278 @ 433 MHz) ---
+#define F_BCN         433.5      // MHz (KHÔNG dùng Hz nguyên lớn)
+#define SF_BCN        10             // ví dụ SF9 cho beacon
+#define BW_BCN        250        // kHz
+#define SW_BCN        0x14          // "private" sync word
+#define PREAMBLE_BCN  15            // beacon preamble dài hơn uplink
+
+// --- PHY uplink (SX1278 @ 433 MHz) ---
+#define F_UL          434      // MHz (có thể chọn kênh khác trong dải 433)
+#define SF_UL         9             // ví dụ SF7 cho uplink (ToA ngắn hơn)
+#define BW_UL         125        // kHz
+#define SW_UL         0x12         // "public/LoRaWAN" sync word
 
 static const int IMU_PAYLOAD_LEN = 33;               // id + ax..gz + dt + t_s
 static const int IMU_TOTAL_LEN   = IMU_PAYLOAD_LEN + sizeof(uint32_t); // + CRC32 = 37
@@ -35,4 +47,6 @@ void lora_process_task(void* pv);
 
 bool deserializeIMUSample(IMUSample &out, const uint8_t* buf, size_t len);
 
+void radio_config_beacon();
+void radio_config_uplink();
 #endif

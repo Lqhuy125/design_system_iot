@@ -60,9 +60,13 @@ static  bool tdma_beacon_deserialize(TDMABeacon &out, const uint8_t* buf, size_t
 // Nhận beacon với timeout; return true nếu parse & CRC OK
 bool lora_receive_beacon(TDMABeacon& out) {
   xSemaphoreTake(gLoraMutex, portMAX_DELAY);
+  radio_config_beacon();
   uint8_t buf[BEACON_TOTAL_LEN];
   int state = radio.readData(buf, BEACON_TOTAL_LEN);
-
+  radio_config_uplink();
+  for (int i=0; i<sizeof(TDMABeacon); i++) {
+      Serial.print(buf[i], HEX); Serial.print(" ");
+  }
   if (state != RADIOLIB_ERR_NONE) return false;
 
   int len = radio.getPacketLength();

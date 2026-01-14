@@ -25,4 +25,7 @@ void mqtt_push_task(void* pv);
 /* Define the function be used in program*/
 void transmit_without_rtos();
 
+extern void radio_config_beacon();
+extern void radio_config_uplink();
+
 #endif

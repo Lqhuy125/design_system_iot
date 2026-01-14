@@ -117,6 +117,7 @@ void tdma_scheduler_task(void* pv) {
   {
     radioMode = RADIO_TX;
     Serial.println("tdma_send_beacon_broadcast"); 
+    
     transmissionState = tdma_send_beacon_broadcast( frame_id, 
                                                     cfg.slot_len_ms, 
                                                     cfg.total_slots, 
@@ -180,6 +181,7 @@ void lora_process_task(void* pv) {
   IMUSample s;
 
   for (;;) {
+    
     if (rxDoneFlag) {
       // Clear cờ trước khi xử lý
       rxDoneFlag = false;

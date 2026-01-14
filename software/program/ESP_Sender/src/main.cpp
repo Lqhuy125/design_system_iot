@@ -129,11 +129,11 @@ void lora_process_task(void* pv) {
           uint32_t t0 = micros();
           lora_send_imusample(s);                // hàm này đã standby + delay + startReceive
           uint32_t t1 = micros();
-          Serial.println(rxDoneFlag);
+          // Serial.println(rxDoneFlag);
           // 6) Luôn quay lại RX
           setModeRX();
           Serial.print("TX time (us): "); Serial.println(t1 - t0);
-          Serial.println(rxDoneFlag);
+          // Serial.println(rxDoneFlag);7
         } 
         else {
           Serial.println("No sample -> skip TX");

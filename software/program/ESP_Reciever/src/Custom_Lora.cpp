@@ -35,6 +35,20 @@ inline uint32_t calcCRC32(const void *data, size_t length) {
     return ~crc;  // final XOR
 }
 
+void radio_config_beacon() {
+  // Beacon: kênh/sync word/preamble riêng, SF/BW có thể khác uplink
+  radio.setFrequency(F_BCN);       // RadioLib nhận float MHz/kHz? (Hàm của bạn nhận MHz)
+  radio.setSyncWord(SW_BCN);
+  radio.setSpreadingFactor(SF_BCN);
+  radio.setBandwidth(BW_BCN);
+  radio.setPreambleLength(PREAMBLE_BCN);
+}
+void radio_config_uplink() {
+  radio.setFrequency(F_UL);      
+  radio.setSyncWord(SW_UL);
+  radio.setSpreadingFactor(SF_UL);
+  radio.setBandwidth(BW_UL);
+}
 void InitLora(void)
 {
     // initialize SX1278 with default settings
@@ -47,6 +61,8 @@ void InitLora(void)
       Serial.println(state);
       while (true) { delay(10); }
     }
+
+    radio_config_beacon();
 }
 
 /* Send Data */
