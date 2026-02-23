@@ -14,16 +14,21 @@
 #include "freertos/task.h"
 #include "freertos/queue.h"
 
-
+#include "TDMA.h"
 /* Define the number of nodes in system */
 #define MAX_NODES 5
+#define SLAVE_NODE
+#define SLAVE_NODE_ID 3
 
 /* Define the function of RTOS task */
-void telemetry_task(void* pv);
-
-void transmit_task(void* pv);
+void lora_process_task(void* pv);
 
 /* Define the function be used in program*/
 void transmit_without_rtos();
+
+struct TDMABeacon;
+extern bool lora_receive_beacon(TDMABeacon& out);
+extern uint8_t tdma_choose_slot(uint8_t my_id, const TDMABeacon& b);
+
 
 #endif
