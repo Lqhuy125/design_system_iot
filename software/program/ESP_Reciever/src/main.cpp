@@ -58,6 +58,8 @@ void setup() {
 
   radio.setPacketReceivedAction(dio0_isr);
 
+  radio.setPacketSentAction(dio0_isr);
+
   Init_Connection();
 
   /* Create queues Rx->Agg->MQTT */
@@ -126,7 +128,7 @@ void tdma_scheduler_task(void* pv) {
     Serial.print(frame_id);
   }
   
-  Serial.println("txDoneFlag"); Serial.print(txDoneFlag);
+  // Serial.println("txDoneFlag"); Serial.print(txDoneFlag);
   // Chờ TX done -> chuyển sang RX
   while (!txDoneFlag) 
   { 
@@ -153,7 +155,7 @@ void tdma_scheduler_task(void* pv) {
     frame_id++;
     radioMode = RADIO_TX;
     transmissionState = tdma_send_beacon_broadcast(frame_id, cfg.slot_len_ms, cfg.total_slots, 0);
-    Serial.println("[TDMA] TX beacon frame_id=");  Serial.print(frame_id);
+    Serial.print("[TDMA] TX beacon frame_id=");  Serial.println(frame_id);
 
     // Chờ TX done
     while (!txDoneFlag) { vTaskDelay(pdMS_TO_TICKS(1)); }
@@ -165,12 +167,12 @@ void tdma_scheduler_task(void* pv) {
       Serial.println(transmissionState);
     }
     uint32_t trace_stop = micros();
-    Serial.println(" time to run: ");      Serial.print(trace_stop-trace_start);
+    // Serial.println(" time to run: ");      Serial.print(trace_stop-trace_start);
     // Chuyển sang RX cho phần thời gian slots
     setModeRX();
 
     // (Không phát beacon trong nhánh RX nữa)
-    Serial.println("Send beacon for the next cycle (scheduled)");
+    // Serial.println("Send beacon for the next cycle (scheduled)");
   }
 }
 
@@ -210,7 +212,7 @@ void mqtt_push_task(void* pv) {
   uint32_t lastLoop = 0;
   uint32_t lastPrint = 0;
   uint32_t cnt_loop = 0;
-  Serial.println("Checkpoint3");
+  // Serial.println("Checkpoint3");
   for (;;) {
     // 1) chờ sample cần publish
     if (xQueueReceive(gMqttQueue, &s, portMAX_DELAY) == pdTRUE) {

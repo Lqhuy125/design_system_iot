@@ -29,4 +29,6 @@ void transmit_without_rtos();
 extern void radio_config_beacon();
 extern void radio_config_uplink();
 
+#include "security.h"
+
 #endif

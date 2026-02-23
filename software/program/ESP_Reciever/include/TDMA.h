@@ -5,7 +5,8 @@
 #include "Custom_Lora.h"
 #include "stdint.h"
 #include <RadioLib.h>
-
+#include "mbedtls/aes.h"
+#include "security.h"
 
 // Cấu hình cho scheduler beacon
 struct TDMA_BeaconConfig {
@@ -17,7 +18,7 @@ struct TDMA_BeaconConfig {
 };
 
 struct __attribute__((packed)) TDMABeacon {
-  uint8_t   sync;               // = 0xAA
+  uint16_t  sync;               // = 0xAA
   uint16_t  frame_id;           // ID frame hiện tại (do master sinh)
   uint32_t  beacon_timestamp;   // millis() tại master khi gửi
   uint16_t  slot_len_ms;        // độ dài 1 slot
@@ -54,5 +55,11 @@ uint8_t tdma_send_beacon_broadcast(
 );
 
 void BeaconConfiguration();
+
+
+static int aes_ecb_encrypt_16(const uint8_t key[16],
+                              const uint8_t in[16],
+                              uint8_t out[16]);
+
 
 #endif
