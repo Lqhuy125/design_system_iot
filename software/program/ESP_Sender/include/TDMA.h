@@ -4,8 +4,8 @@
 #include "main.h"
 
 /* Total bytes of the element in TDMABeacon struct  */
-#define BEACON_TOTAL_LEN 15
-#define BEACON_PAYLOAD_LEN 11  // except for crc
+#define BEACON_TOTAL_LEN 16
+#define BEACON_PAYLOAD_LEN 12  // except for crc
 
 // === Thêm: guard/margin mặc định (có thể chỉnh theo môi trường của bạn) ===
 #define TDMA_GUARD_MS   8   // bù trễ/jitter trước khi vào slot
@@ -23,7 +23,7 @@ struct TDMA_BeaconConfig {
 };
 
 struct __attribute__((packed)) TDMABeacon {
-  uint8_t   sync;               // = 0xAA
+  uint16_t   sync;              // = 0xAA
   uint16_t  frame_id;           // ID frame hiện tại (do master sinh)
   uint32_t  beacon_timestamp;   // millis() tại master khi gửi
   uint16_t  slot_len_ms;        // độ dài 1 slot
