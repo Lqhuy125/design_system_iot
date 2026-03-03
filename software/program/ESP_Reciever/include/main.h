@@ -14,6 +14,7 @@
 #include "freertos/queue.h"
 
 #include "TDMA.h"
+#include "secure_beacon.h"
 /* Define the number of nodes in system */
 #define MAX_NODES 5
 #define SLAVE_NODE_ID 3
@@ -28,7 +29,5 @@ void transmit_without_rtos();
 
 extern void radio_config_beacon();
 extern void radio_config_uplink();
-
-#include "security.h"
 
 #endif
