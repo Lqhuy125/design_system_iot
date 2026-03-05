@@ -6,7 +6,7 @@ TaskHandle_t hTDMAScheduler, hLoRaRx, hMqttPush;
 SemaphoreHandle_t gI2CMutex;
 SemaphoreHandle_t gLoraMutex;
 
-
+ 
 /*======================== LORA STATE ========================*/
 enum RadioMode : uint8_t 
 { 
