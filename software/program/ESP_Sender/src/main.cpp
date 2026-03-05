@@ -40,6 +40,11 @@ void IRAM_ATTR dio0_isr() {
 
 /*===========================================================*/
 
+/*======================WDG Config============================*/
+esp_err_t ESP32_ERROR;
+int i = 0;
+int last = millis();
+/*===========================================================*/
 void setup() {
   Serial.begin(9600);
   Serial.println("Node ID:"); Serial.print(SLAVE_NODE_ID);
@@ -73,8 +78,7 @@ void setup() {
 
 void loop() {
   // RTOS tasks chạy riêng; loop() có thể để trống
-  // vTaskDelay(pdMS_TO_TICKS(1000));
-  
+
   /* Run without RTOS*/
   // transmit_without_rtos();
 
@@ -88,7 +92,12 @@ void lora_process_task(void* pv) {
   Serial.println("lora_process_task");
   setModeRX();                 // vào RX để bắt beacon ngay
   IMUSample s;
-  Serial.println(rxDoneFlag);
+  // Serial.println(rxDoneFlag);
+  // esp_task_wdt_add(NULL);
+  
+// Mốc thời gian cuối cùng có tín hiệu sống
+  uint32_t last_progress_ms = millis();
+
   for (;;) {
     // 1) Khi có ngắt RX (DIO0), thử đọc beacon
     if (rxDoneFlag) {
@@ -99,11 +108,11 @@ void lora_process_task(void* pv) {
         uint32_t rx_millis = millis();
 
         // 2) Tính slot theo TDMA
-        if (b.total_slots == 0) {              // không có slot thì bỏ qua
+        /* if (b.total_slots == 0) {              // không có slot thì bỏ qua
           setModeRX();
           vTaskDelay(pdMS_TO_TICKS(1));
           continue;
-        }
+        } */
         const uint8_t slot_idx = tdma_choose_slot(SLAVE_NODE_ID, b);
         uint32_t t_start = rx_millis + TDMA_GUARD_MS
                          + (uint32_t)b.slot_len_ms * slot_idx;
@@ -142,8 +151,10 @@ void lora_process_task(void* pv) {
       else 
       {
         Serial.println("Beacon parse/CRC failed");
-        Serial.println(rxDoneFlag);
-        setModeRX();
+        // Serial.println(rxDoneFlag);
+        esp_restart();
+        // setModeRX();
+        
       }
     }
     // Nhịp thở nhẹ để nhường CPU

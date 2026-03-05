@@ -2,6 +2,8 @@
 
 extern TDMA_BeaconConfig cfg;
 
+
+
 static inline void tdma_beacon_fill_crc(TDMABeacon& b) {
   const size_t len_wo_crc = sizeof(TDMABeacon) - sizeof(uint32_t);
   b.crc = calcCRC32(&b, len_wo_crc);
@@ -44,15 +46,22 @@ static inline uint8_t tdma_send_beacon(const TDMABeacon& b) {
 
   xSemaphoreTake(gLoraMutex, portMAX_DELAY);
   // Serialize struct thành mảng byte và transmit
-  const uint8_t* raw = reinterpret_cast<const uint8_t*>(&b);
+  // const uint8_t* raw = reinterpret_cast<const uint8_t*>(&b);
+  /* This is the sample data to testing */
+  uint8_t raw[16] =
+  {
+    0xAB, 0x00, 0x01, 0x00, 0xFC, 0x0F, 0x00, 0x00, 
+    0x72, 0x01, 0x00, 0x04, 0xFD, 0x46, 0xC3, 0x9F
+  };
+  // Encrypt 16 bytes ADC-ECB
+  uint8_t cipher[16];
+  (void)secure_beacon_encrypt(raw, &b, cipher);
   radio_config_beacon();
-  int state = radio.transmit((byte*)raw, sizeof(TDMABeacon));
+  int state = radio.transmit((byte*)cipher, sizeof(TDMABeacon));
   radio_config_uplink();
   uint8_t buff[15];
   xSemaphoreGive(gLoraMutex);
-  for (int i=0; i<sizeof(TDMABeacon); i++) {
-      Serial.print(raw[i], HEX); Serial.print(" ");
-  }
+
   return state;
 }
 
@@ -70,7 +79,7 @@ uint8_t tdma_send_beacon_broadcast(
 
 void BeaconConfiguration()
 {  
-  cfg.slot_len_ms   = 500; /* Calculate time run of one node */
+  cfg.slot_len_ms   = 370; /* Calculate time run of one node */
   cfg.total_slots   = SLAVE_NODE_ID + 1; /* Recommend to config the number of nodes + 1 */
   cfg.broadcast_mode= true;   // phát 1 beacon chung
   cfg.max_node_id   = 0;      // không dùng khi broadcast
