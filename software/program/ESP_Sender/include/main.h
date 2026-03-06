@@ -6,8 +6,8 @@
 
 #include "MQTT.h"
 #include "Sensor.h"
-#include "MahonyAHRS.h"
 #include "Custom_Lora.h"
+#include "secure_beacon.h"
 
 /* Library for freeRTOS */
 #include "freertos/FreeRTOS.h"
@@ -18,7 +18,7 @@
 /* Define the number of nodes in system */
 #define MAX_NODES 5
 #define SLAVE_NODE
-#define SLAVE_NODE_ID 3
+#define SLAVE_NODE_ID 1
 
 /* Define the function of RTOS task */
 void lora_process_task(void* pv);
