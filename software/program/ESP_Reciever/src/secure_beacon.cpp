@@ -116,7 +116,7 @@ bool secure_beacon_encrypt(uint8_t input_test[16], const TDMABeacon* b, uint8_t 
     uint8_t raw[sizeof(TDMABeacon)];
     memcpy(raw, b, sizeof(TDMABeacon));
     /* This line open to test input */
-    memcpy(raw, input_test, 16);
+    // memcpy(raw, input_test, 16);
 
     // 2) MIC = 4 byte đầu của CMAC(MIC_KEY, beacon_without_crc)
     const size_t LEN_WO_CRC = sizeof(TDMABeacon) - sizeof(uint32_t);
