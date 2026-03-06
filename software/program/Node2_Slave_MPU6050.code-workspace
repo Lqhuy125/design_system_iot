@@ -28,6 +28,9 @@
 		{
 			"name": "Recieve_Node_ESP32_Lora",
 			"path": "Recieve_Node_ESP32_Lora"
+		},
+		{
+			"path": "../dashboard/Example/MPU_DashBoard"
 		}
 	],
 	"settings": {

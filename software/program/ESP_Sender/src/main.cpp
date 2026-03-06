@@ -15,11 +15,11 @@ SemaphoreHandle_t gLoraMutex;
 SX1278 radio = new Module(ss, dio0, rst);
 IMUSample nodeData[MAX_NODES];
 
-enum RadioMode : uint8_t 
-{ 
-  RADIO_IDLE = 0, 
-  RADIO_TX, 
-  RADIO_RX 
+enum RadioMode : uint8_t
+{
+  RADIO_IDLE = 0,
+  RADIO_TX,
+  RADIO_RX
 };
 volatile RadioMode radioMode = RADIO_IDLE;
 
@@ -54,7 +54,7 @@ void setup() {
 
   InitLora();
   radio.setPacketReceivedAction(dio0_isr);
-  
+
   Init_MPU6050();
 
   /* Create queues */
@@ -68,11 +68,11 @@ void setup() {
                           2,                  /* Priority */
                           &hSensor,           /* Task hander */
                           0);                 /* Core ID */
-  
+
   xTaskCreatePinnedToCore(lora_process_task,
     "LoRaProcess", 4096, nullptr, 2, &hLoraProcess, 1);
 
-  setModeRX(); 
+  setModeRX();
   Serial.println("RTOS pipeline started: Sensor->Transmit");
 }
 
@@ -84,7 +84,7 @@ void loop() {
 
   /* RecieveData(); */
 }
-/* 
+/*
     =========== Task on freeRTOS ============
 */
 void lora_process_task(void* pv) {
@@ -94,7 +94,7 @@ void lora_process_task(void* pv) {
   IMUSample s;
   // Serial.println(rxDoneFlag);
   // esp_task_wdt_add(NULL);
-  
+
 // Mốc thời gian cuối cùng có tín hiệu sống
   uint32_t last_progress_ms = millis();
 
@@ -102,7 +102,7 @@ void lora_process_task(void* pv) {
     // 1) Khi có ngắt RX (DIO0), thử đọc beacon
     if (rxDoneFlag) {
       rxDoneFlag = false;
-      
+
       TDMABeacon b;
       if (lora_receive_beacon(b)) {            // parse + CRC OK
         uint32_t rx_millis = millis();
@@ -114,6 +114,13 @@ void lora_process_task(void* pv) {
           continue;
         } */
         const uint8_t slot_idx = tdma_choose_slot(SLAVE_NODE_ID, b);
+        // Skip if not our slot (targeted mode)
+        if (slot_idx == 0xFF) {
+            Serial.println("Not my slot, skipping");
+            setModeRX();
+            vTaskDelay(pdMS_TO_TICKS(1));
+            continue;
+        }
         uint32_t t_start = rx_millis + TDMA_GUARD_MS
                          + (uint32_t)b.slot_len_ms * slot_idx;
         uint32_t t_end   = t_start + b.slot_len_ms - TDMA_MARGIN_MS;
@@ -143,18 +150,18 @@ void lora_process_task(void* pv) {
           setModeRX();
           Serial.print("TX time (us): "); Serial.println(t1 - t0);
           // Serial.println(rxDoneFlag);7
-        } 
+        }
         else {
           Serial.println("No sample -> skip TX");
         }
-      } 
-      else 
+      }
+      else
       {
         Serial.println("Beacon parse/CRC failed");
         // Serial.println(rxDoneFlag);
         esp_restart();
         // setModeRX();
-        
+
       }
     }
     // Nhịp thở nhẹ để nhường CPU
@@ -184,7 +191,7 @@ void transmit_without_rtos()
       Serial.print("  gz: ");  Serial.print(s.gz, 3);
       Serial.print("  t(ms): "); Serial.println(s.dt * 1000.0f, 2);
       Serial.print(" time(s): "); Serial.println(s.t_s, 3);
-    } 
+    }
 
   }
 }
