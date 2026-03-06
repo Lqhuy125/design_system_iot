@@ -82,7 +82,7 @@ bool lora_receive_beacon(TDMABeacon& out) {
   }
 
   int len = radio.getPacketLength();
-  if ((len != BEACON_TOTAL_LEN) || (buf[0] != 0xAA))
+  if ((len != BEACON_TOTAL_LEN))
   {
     Serial.print("[RX] Invalid length: ");
     Serial.println(len);
