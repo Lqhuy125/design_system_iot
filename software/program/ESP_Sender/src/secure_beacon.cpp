@@ -4,34 +4,36 @@
 #include <string.h>
 
 // ------------------------------------------------------------
-// 1) Key separation (2 khóa khác nhau):
+// 1) Key separation:
 //    - ENC_KEY: AES-ECB encryption
 //    - MIC_KEY: CMAC(MIC) calculation
 // ------------------------------------------------------------
 /* 101112131415161718191A1B1C1D1E1F */
 /* This key to encrypt data */
-static uint8_t BEACON_AES_KEY[16] = {
-  0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
-  0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F
+static uint8_t BEACON_AES_KEY[16] =
+{
+    0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+    0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F
 };
 /* This key to mac cipher data */
-static const uint8_t MIC_KEY[16] = {
-    0x21,0x22,0x23,0x24, 0x25,0x26,0x27,0x28,
-    0x29,0x2A,0x2B,0x2C, 0x2D,0x2E,0x2F,0x30
+static const uint8_t MIC_KEY[16] =
+{
+    0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28,
+    0x29, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F, 0x30
 };
 
 // ------------------------------------------------------------
 // 2) AES-ECB one-block encrypt (mbedTLS)
 // ------------------------------------------------------------
-static void aes_ecb_encrypt_block(const uint8_t key[16],
+static void aes_ecb_decrypt_block(const uint8_t key[16],
                                   const uint8_t in[16],
                                   uint8_t out[16])
 {
     mbedtls_aes_context ctx;
     mbedtls_aes_init(&ctx);
 
-    mbedtls_aes_setkey_enc(&ctx, key, 128);
-    mbedtls_aes_crypt_ecb(&ctx, MBEDTLS_AES_ENCRYPT, in, out);
+    mbedtls_aes_setkey_dec(&ctx, key, 128);
+    mbedtls_aes_crypt_ecb(&ctx, MBEDTLS_AES_DECRYPT, in, out);
 
     mbedtls_aes_free(&ctx);
 }
@@ -107,39 +109,77 @@ static void aes_cmac_128(const uint8_t key[16],
 }
 
 // ------------------------------------------------------------
-// 4) secure_beacon_encrypt() - MASTER side
-//    ECB + CMAC(MIC 4 byte)
+// 4) secure_beacon_decrypt() - SLAVE side
+/*
+1. Decrypt the 16-byte cipher using AES-ECB with BEACON_AES_KEY
+2. Extract the 4-byte MIC from bytes 12-15 of decrypted data
+3. Recompute CMAC on the first 12 bytes using MIC_KEY
+4. Compare the first 4 bytes of computed CMAC with received MIC
+5. Return true only if MIC matches (integrity verified) */
 // ------------------------------------------------------------
-bool secure_beacon_encrypt(uint8_t input_test[16], const TDMABeacon* b, uint8_t out[16])
+
+bool secure_beacon_verify_mic(const uint8_t cipher[16], uint8_t decrypted_out[16])
 {
-    // 1) Copy plaintext beacon structure
-    uint8_t raw[sizeof(TDMABeacon)];
-    memcpy(raw, b, sizeof(TDMABeacon));
-    /* This line open to test input */
-    memcpy(raw, input_test, 16);
+    // 1) Decrypt AES-ECB block 16B
+    aes_ecb_decrypt_block(BEACON_AES_KEY, cipher, decrypted_out);
 
-    // 2) MIC = 4 byte đầu của CMAC(MIC_KEY, beacon_without_crc)
-    const size_t LEN_WO_CRC = sizeof(TDMABeacon) - sizeof(uint32_t);
+    Serial.print("[CMAC] Decrypted: ");
+    for (int i = 0; i < 16; i++) {
+        Serial.print(decrypted_out[i], HEX);
+        Serial.print(" ");
+    }
+    Serial.println();
 
+    // 2) Extract received MIC (last 4 bytes)
+    const size_t LEN_WO_CRC = sizeof(TDMABeacon) - sizeof(uint32_t);  // 12 bytes
+    uint8_t received_mic[MIC_LEN];
+    memcpy(received_mic, decrypted_out + LEN_WO_CRC, MIC_LEN);
+
+    Serial.print("[CMAC] Received MIC: ");
+    for (int i = 0; i < MIC_LEN; i++) {
+        Serial.print(received_mic[i], HEX);
+        Serial.print(" ");
+    }
+    Serial.println();
+
+    // 3) Recompute CMAC on data portion (first 12 bytes)
     uint8_t full_cmac[16];
-    /* Cmac generate with plain data */
-    aes_cmac_128(MIC_KEY, raw, LEN_WO_CRC, full_cmac);
+    aes_cmac_128(MIC_KEY, decrypted_out, LEN_WO_CRC, full_cmac);
 
+    Serial.print("[CMAC] Computed CMAC: ");
     for (int i = 0; i < 16; i++) {
         Serial.print(full_cmac[i], HEX);
         Serial.print(" ");
     }
     Serial.println();
-    /* overwrite 4 byte MIC to CRC field */
-    memcpy(raw + LEN_WO_CRC, full_cmac, MIC_LEN);  // MIC_LEN=4
 
-    // 3) Encrypt AES-ECB block 16B
-    aes_ecb_encrypt_block(BEACON_AES_KEY, raw, out);
+    // 4) Compare first 4 bytes of computed CMAC with received MIC
+    bool mic_valid = (memcmp(full_cmac, received_mic, MIC_LEN) == 0);
 
-    for (int i = 0; i < 16; i++) {
-        Serial.print(out[i], HEX);
-        Serial.print(" ");
+    if (mic_valid) {
+        Serial.println("[CMAC] MIC verification PASSED");
+    } else {
+        Serial.println("[CMAC] MIC verification FAILED");
     }
-    Serial.println();
+
+    return mic_valid;
+}
+
+bool secure_beacon_decrypt_and_verify(uint8_t input_test[16], const TDMABeacon* beacon_out, const uint8_t cipher[16])
+{
+    uint8_t decrypted[16];
+
+    // 1) Verify MIC and get decrypted data
+    if (!secure_beacon_verify_mic(cipher, decrypted)) {
+        return false;
+    }
+
+    // 2) Copy decrypted data to beacon structure (without MIC field)
+    memcpy(beacon_out, decrypted, sizeof(TDMABeacon) - sizeof(uint32_t));
+
+    // 3) Recalculate CRC for the beacon structure
+    const size_t len_wo_crc = sizeof(TDMABeacon) - sizeof(uint32_t);
+    beacon_out->crc = calcCRC32(beacon_out, len_wo_crc);
+
     return true;
 }
