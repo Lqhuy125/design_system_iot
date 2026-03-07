@@ -19,6 +19,6 @@ void publishNodeData(const IMUSample &d);
 void reconnect();
 
 void mqtt_push_task(void* pv);
-
+void publishCipherData(const CipherPacket &pkt);
 static inline void makeNodeIdStr(char* out, size_t len, int id);
 #endif
