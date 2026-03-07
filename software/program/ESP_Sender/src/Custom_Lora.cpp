@@ -36,7 +36,7 @@ void radio_config_beacon() {
   radio.setPreambleLength(PREAMBLE_BCN);
 }
 void radio_config_uplink() {
-  radio.setFrequency(F_UL);      
+  radio.setFrequency(F_UL);
   radio.setSyncWord(SW_UL);
   radio.setSpreadingFactor(SF_UL);
   radio.setBandwidth(BW_UL);
@@ -106,7 +106,42 @@ void lora_send_imusample(const IMUSample& s) {
   xSemaphoreGive(gLoraMutex);
 }
 
-static int serializeIMUSample(const IMUSample& s, uint8_t* out) {
+/* Send Encrypted Data */
+void lora_send_imusample_secure(const IMUSample& s) {
+    uint8_t cipher[SECURE_DATA_TOTAL_LEN];
+
+    // Encrypt the IMU sample
+    if (!secure_data_encrypt(s, cipher)) {
+        Serial.println("[TX] Encryption failed!");
+        return;
+    }
+
+    xSemaphoreTake(gLoraMutex, portMAX_DELAY);
+    radio_config_uplink();
+
+    Serial.print("[TX] Sending encrypted data (");
+    Serial.print(SECURE_DATA_TOTAL_LEN);
+    Serial.println(" bytes)");
+
+    int state = radio.transmit((byte*)cipher, SECURE_DATA_TOTAL_LEN);
+
+    /* Move to recieve beacon moed */
+    radio_config_beacon();
+    /* Time delay for switch TX -> RX */
+    radio.standby();
+    delayMicroseconds(3000);   // 2–5 ms
+    radio.startReceive();
+
+    if (state == RADIOLIB_ERR_NONE) {
+        Serial.println("[TX] Encrypted data sent successfully!");
+    } else {
+        Serial.print("[TX] Failed, code: ");
+        Serial.println(state);
+    }
+
+    xSemaphoreGive(gLoraMutex);
+}
+int serializeIMUSample(const IMUSample& s, uint8_t* out) {
   int idx = 0;
 
   memcpy(&out[idx], &s.id, sizeof(s.id));      idx += sizeof(s.id);
@@ -118,7 +153,7 @@ static int serializeIMUSample(const IMUSample& s, uint8_t* out) {
   memcpy(&out[idx], &s.gz, sizeof(s.gz));      idx += sizeof(s.gz);
   memcpy(&out[idx], &s.dt, sizeof(s.dt));      idx += sizeof(s.dt);
   memcpy(&out[idx], &s.t_s, sizeof(s.t_s));    idx += sizeof(s.t_s);
-  
+
   return idx; // độ dài phần dữ liệu IMUSample (chưa có CRC)
 }
 
@@ -126,10 +161,10 @@ static int serializeIMUSample(const IMUSample& s, uint8_t* out) {
 /* ========================Start Recieve Data======================== */
 void lora_recieve_imusample(IMUSample &s)
 {
-    
+
 }
 
-static int deserializeIMUSample(IMUSample& s, const uint8_t *buffer) {
+int deserializeIMUSample(IMUSample& s, const uint8_t *buffer) {
   int idx = 0;
 
   memcpy(&s.id, &buffer[idx], sizeof(s.id));        idx += sizeof(s.id);
@@ -143,9 +178,9 @@ static int deserializeIMUSample(IMUSample& s, const uint8_t *buffer) {
   memcpy(&s.t_s, &buffer[idx], sizeof(s.t_s));    idx += sizeof(s.t_s);
   memcpy(&s.crc, &buffer[idx], sizeof(s.crc));      idx += sizeof(s.crc);
 
-  /* for (int i=0; i<sizeof(IMUSample); i++) {
+  for (int i=0; i<sizeof(IMUSample); i++) {
       Serial.print(buffer[i], HEX); Serial.print(" ");
-  } */
+  }
   return idx;
 }
 

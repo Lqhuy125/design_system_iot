@@ -8,11 +8,11 @@ SemaphoreHandle_t gLoraMutex;
 
 
 /*======================== LORA STATE ========================*/
-enum RadioMode : uint8_t 
-{ 
-  RADIO_IDLE = 0, 
-  RADIO_TX, 
-  RADIO_RX 
+enum RadioMode : uint8_t
+{
+  RADIO_IDLE = 0,
+  RADIO_TX,
+  RADIO_RX
 };
 volatile RadioMode radioMode = RADIO_IDLE;
 
@@ -68,46 +68,46 @@ void setup() {
   gMqttQueue = xQueueCreate(/*len=*/128, sizeof(IMUSample));
 
   /* Create tasks, pin to cores (ESP32: core 0 & 1) */
-  xTaskCreatePinnedToCore(lora_process_task,     
-                          "LoRaRxTask",     
-                          4096, 
-                          nullptr, 
-                          3, 
-                          &hLoRaRx,     
+  xTaskCreatePinnedToCore(lora_process_task,
+                          "LoRaRxTask",
+                          4096,
+                          nullptr,
+                          3,
+                          &hLoRaRx,
                           1);
-  xTaskCreatePinnedToCore(tdma_scheduler_task,  
-                          "TDMAScheduler", 
-                          4096, 
-                          nullptr, 
-                          2, 
+  xTaskCreatePinnedToCore(tdma_scheduler_task,
+                          "TDMAScheduler",
+                          4096,
+                          nullptr,
+                          2,
                           &hTDMAScheduler,
                           1);
-  xTaskCreatePinnedToCore(mqtt_push_task,   
-                          "MqttPushTask",   
-                          4096, 
-                          nullptr, 
-                          1, 
-                          &hMqttPush,  
+  xTaskCreatePinnedToCore(mqtt_push_task,
+                          "MqttPushTask",
+                          4096,
+                          nullptr,
+                          1,
+                          &hMqttPush,
                           0);
 
-  Serial.println("RTOS pipeline started: TDMA -> TX Beacon -> RX -> Push Data");
+  Serial.println("[MAIN] RTOS pipeline started: TDMA -> TX Beacon -> RX Data -> Push Data");
 }
 
 void loop() {
   // RTOS tasks chạy riêng; loop() có thể để trống
   // vTaskDelay(pdMS_TO_TICKS(1000));
-  
+
   /* Run without RTOS*/
 
   /* RecieveData(); */
 }
-/* 
+/*
     =========== Task on freeRTOS ============
 */
 
 /*======================== TDMA Scheduler ====================*/
 void tdma_scheduler_task(void* pv) {
-  Serial.println("tdma_scheduler_task"); 
+  Serial.println("[MAIN] TDMA scheduler task");
   (void)pv;
   const uint32_t FRAME_MS = (uint32_t)cfg.slot_len_ms * cfg.total_slots;
   TickType_t lastWake = xTaskGetTickCount();
@@ -118,25 +118,25 @@ void tdma_scheduler_task(void* pv) {
   /* Gửi beacon khởi động */
   {
     radioMode = RADIO_TX;
-    Serial.println("tdma_send_beacon_broadcast"); 
-    
-    transmissionState = tdma_send_beacon_broadcast( frame_id, 
-                                                    cfg.slot_len_ms, 
-                                                    cfg.total_slots, 
+    Serial.println("[MAIN] TDMA send beacon broadcast");
+
+    transmissionState = tdma_send_beacon_broadcast( frame_id,
+                                                    cfg.slot_len_ms,
+                                                    cfg.total_slots,
                                                     0);
-    Serial.println("[TDMA] TX beacon frame_id=");  
+    Serial.println("[TDMA] TX beacon frame_id=");
     Serial.print(frame_id);
   }
-  
+
   // Serial.println("txDoneFlag"); Serial.print(txDoneFlag);
   // Chờ TX done -> chuyển sang RX
-  while (!txDoneFlag) 
-  { 
-    vTaskDelay(pdMS_TO_TICKS(1)); 
+  while (!txDoneFlag)
+  {
+    vTaskDelay(pdMS_TO_TICKS(1));
   }
   txDoneFlag = false;
   if (transmissionState == RADIOLIB_ERR_NONE) {
-    Serial.println("transmission finished!");
+    Serial.println("[MAIN] Transmission beacon finished!");
   } else {
     Serial.println("failed, code :");  Serial.print(transmissionState);
   }
@@ -147,7 +147,7 @@ void tdma_scheduler_task(void* pv) {
   // --- Vòng lặp các chu kỳ TDMA ---
   for (;;) {
     uint32_t trace_start = micros();
-              
+
     // Đợi tới đúng mốc chu kỳ kế tiếp
     vTaskDelayUntil(&lastWake, period);
 
@@ -161,7 +161,7 @@ void tdma_scheduler_task(void* pv) {
     while (!txDoneFlag) { vTaskDelay(pdMS_TO_TICKS(1)); }
     txDoneFlag = false;
     if (transmissionState == RADIOLIB_ERR_NONE) {
-      Serial.println("transmission finished!");
+      Serial.println("[MAIN] transmission finished!");
     } else {
       Serial.println("failed, code:");
       Serial.println(transmissionState);
@@ -178,27 +178,42 @@ void tdma_scheduler_task(void* pv) {
 
 void lora_process_task(void* pv) {
   (void)pv;
-  Serial.println("lora_process_task");
-  uint8_t  rxBuf[IMU_TOTAL_LEN];
-  IMUSample s;
-
+  Serial.println("[MAIN] Lora process task");
+  uint8_t  rxBuf[SECURE_DATA_TOTAL_LEN];
+  /* IMUSample s; */
+  CipherPacket cpk;
   for (;;) {
-    
+
     if (rxDoneFlag) {
       // Clear cờ trước khi xử lý
       rxDoneFlag = false;
       // Đọc dữ liệu an toàn
-      int state = radio.readData(rxBuf, IMU_TOTAL_LEN);
+      int state = radio.readData(cpk.data, SECURE_DATA_TOTAL_LEN);
+      cpk.timestamp = millis();
+
+      Serial.print("[LORA] CIPHER DATA RECIEVE: ");
+      for(uint8_t i = 0; i< SECURE_DATA_TOTAL_LEN; i++)
+      {
+        Serial.print(cpk.data[i], HEX);
+        Serial.print(" ");
+      }
+      Serial.println();
 
       if (state == RADIOLIB_ERR_NONE) {
-        if (deserializeIMUSample(s, rxBuf, IMU_TOTAL_LEN)) {
+        /* if (deserializeIMUSample(s, rxBuf, IMU_TOTAL_LEN)) {
           if (xQueueSend(gMqttQueue, &s, 0) != pdTRUE) {
             Serial.println("⚠️ gMqttQueue full, drop sample");
           }
+        } */
+        // Send cipher packet directly to MQTT queue (no decryption)
+        if (xQueueSend(gMqttQueue, &cpk, 0) != pdTRUE) {
+          Serial.println("[MAIN] gMqttQueue full, drop packet");
+        } else {
+          Serial.println("[MAIN] Cipher packet queued for MQTT");
         }
-      } 
+      }
       else {
-        Serial.println("RX readData error:");
+        Serial.println("[MAIN] RX readData error:");
         Serial.println(state);
       }
     }
@@ -208,14 +223,16 @@ void lora_process_task(void* pv) {
 
 void mqtt_push_task(void* pv) {
   (void)pv;
-  IMUSample s;
+  Serial.println("[MAIN] Pushing MQTT task");
+  /* IMUSample s; */
+  CipherPacket cpk;
   uint32_t lastLoop = 0;
   uint32_t lastPrint = 0;
   uint32_t cnt_loop = 0;
   // Serial.println("Checkpoint3");
   for (;;) {
     // 1) chờ sample cần publish
-    if (xQueueReceive(gMqttQueue, &s, portMAX_DELAY) == pdTRUE) {
+    if (xQueueReceive(gMqttQueue, &cpk, portMAX_DELAY) == pdTRUE) {
 
       if (millis() - lastPrint >= 50) {
           lastPrint = millis();
@@ -225,7 +242,8 @@ void mqtt_push_task(void* pv) {
           }
           if (client.connected())
           {
-            publishNodeData(s);  
+            /* publishNodeData(s); */
+            publishCipherData(cpk);
           }
       }
     }
@@ -237,6 +255,6 @@ void mqtt_push_task(void* pv) {
       client.loop();
     }
     vTaskDelay(pdMS_TO_TICKS(5));
-  } 
+  }
 }
 /* ================================ */

@@ -52,7 +52,7 @@ void radio_config_uplink() {
 void InitLora(void)
 {
     // initialize SX1278 with default settings
-    Serial.print(F("[SX1278] Initializing ... "));
+    Serial.print(F("[LORA] Initializing ... "));
     int state = radio.begin();
     if (state == RADIOLIB_ERR_NONE) {
       Serial.println(F("success!"));
@@ -84,7 +84,7 @@ void lora_send_imusample(const IMUSample& s) {
   } */
   // 4) Gửi qua LoRa
   xSemaphoreTake(gLoraMutex, portMAX_DELAY);
-  Serial.println(F("[SX1278] Transmitting packet ... "));
+  Serial.println(F("[LORA] Transmitting packet ... "));
   int state;
   state = radio.transmit((byte*)buffer, total_len);
   // byte byteArr[] = {0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF};

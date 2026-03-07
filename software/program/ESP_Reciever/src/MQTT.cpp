@@ -14,7 +14,7 @@ static const char* WIFI_SSID = "QUANGHUY";
 static const char* WIFI_PASS = "12121213";
 static const char* MQTT_HOST = "broker.hivemq.com";
 static const uint16_t MQTT_PORT = 1883;
-/* Use test.mosquitto.org when can not connect for that 
+/* Use test.mosquitto.org when can not connect for that
 
 ws://broker.hivemq.com:8000/mqtt */
 
@@ -24,9 +24,9 @@ void Init_Connection(void)
     WiFi.begin(WIFI_SSID, WIFI_PASS);
     while (WiFi.status() != WL_CONNECTED) {
         delay(1000);
-        Serial.println("Connecting to WiFi...");
+        Serial.println("[MQTT] Connecting to WiFi...");
     }
-    Serial.println("Connected to WiFi");
+    Serial.println("[MQTT] Connected to WiFi");
     Serial.println(WiFi.localIP());
 
     client.setServer(MQTT_HOST, MQTT_PORT);//connecting to mqtt server
@@ -36,17 +36,17 @@ void Init_Connection(void)
 
 void callback(char* topic, byte* payload, unsigned int length)
 {
-  
+
 }
 
 void publishNodeData(const IMUSample &d)
-{ 
+{
     if (!client.connected())
     {
         reconnect();
         Serial.println("reconnect");
     }
-    
+
     char nodeIdStr[8];
     makeNodeIdStr(nodeIdStr, sizeof(nodeIdStr), (int)d.id);
 
@@ -78,9 +78,58 @@ void publishNodeData(const IMUSample &d)
     // Serial.println("end push");
 }
 
+void publishCipherData(const CipherPacket &pkt)
+{
+    if (!client.connected())
+    {
+        reconnect();
+        Serial.println("reconnect");
+    }
+
+    Serial.print("[MQTT] CIPHER DATA TO SEND: ");
+    for(uint8_t i = 0; i< SECURE_DATA_TOTAL_LEN; i++)
+    {
+    Serial.print(pkt.data[i], HEX);
+    Serial.print(" ");
+    }
+    Serial.println();
+
+    char topic[64];
+    snprintf(topic, sizeof(topic), "bridge/%d/cipher", AREA_ID);
+
+    // Convert cipher data to hex string
+    char hexStr[SECURE_DATA_TOTAL_LEN * 2 + 1];
+    for (size_t i = 0; i < SECURE_DATA_TOTAL_LEN; i++) {
+        sprintf(&hexStr[i * 2], "%02X", pkt.data[i]);
+    }
+    hexStr[SECURE_DATA_TOTAL_LEN * 2] = '\0';
+
+    // Build JSON payload
+    char json[256];
+    int n = snprintf(
+        json, sizeof(json),
+        "{\"ts\":%lu,\"areaId\":%d,\"len\":%d,\"cipher\":\"%s\"}",
+        pkt.timestamp,
+        AREA_ID,
+        SECURE_DATA_TOTAL_LEN,
+        hexStr
+    );
+
+    if (n < 0 || n >= (int)sizeof(json)) {
+        Serial.println("[MQTT] JSON truncated/oversize");
+        return;
+    }
+
+    bool ok = client.publish(topic, json);
+    if (ok) {
+        Serial.println("[MQTT] MQTT cipher published");
+    } else {
+        Serial.println("[MQTT] MQTT publish failed (cipher)");
+    }
+}
 void reconnect()
 {
-    client.connect("ESP32_clientID");
+    client.connect("[MQTT] ESP32_clientID");
 
     while (!client.connected()) {
         Serial.println("Attempting MQTT connection...");
