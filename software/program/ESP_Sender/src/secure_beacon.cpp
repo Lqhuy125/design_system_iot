@@ -191,14 +191,14 @@ bool secure_beacon_decrypt(const uint8_t cipher[16], TDMABeacon* beacon_out)
     }
 
     // Debug output
-    Serial.println("=== Decrypted Beacon ===");
+    /* Serial.println("=== Decrypted Beacon ===");
     Serial.print("  sync: 0x");        Serial.println(beacon_out->sync, HEX);
     Serial.print("  frame_id: ");      Serial.println(beacon_out->frame_id);
     Serial.print("  timestamp: ");     Serial.println(beacon_out->beacon_timestamp);
     Serial.print("  slot_len_ms: ");   Serial.println(beacon_out->slot_len_ms);
     Serial.print("  node_id: ");       Serial.println(beacon_out->node_id);
     Serial.print("  total_slots: ");   Serial.println(beacon_out->total_slots);
-    Serial.println("========================");
+    Serial.println("========================"); */
 
     return true;
 }

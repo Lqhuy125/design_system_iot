@@ -67,12 +67,12 @@ bool lora_receive_beacon(TDMABeacon& out) {
   int state = radio.readData(cipher, SECURE_BEACON_LEN);
 
   radio_config_uplink();
-  Serial.print("[RX] Cipher: ");
+  /* Serial.print("[RX] Cipher: ");
   for (int i = 0; i < SECURE_BEACON_LEN; i++) {
       Serial.print(cipher[i], HEX);
       Serial.print(" ");
   }
-  Serial.println();
+  Serial.println(); */
 
   if (state != RADIOLIB_ERR_NONE) {
       Serial.print("[RX] Read error: ");

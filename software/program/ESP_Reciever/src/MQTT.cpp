@@ -24,9 +24,9 @@ void Init_Connection(void)
     WiFi.begin(WIFI_SSID, WIFI_PASS);
     while (WiFi.status() != WL_CONNECTED) {
         delay(1000);
-        Serial.println("Connecting to WiFi...");
+        Serial.println("[MQTT] Connecting to WiFi...");
     }
-    Serial.println("Connected to WiFi");
+    Serial.println("[MQTT] Connected to WiFi");
     Serial.println(WiFi.localIP());
 
     client.setServer(MQTT_HOST, MQTT_PORT);//connecting to mqtt server
@@ -86,6 +86,14 @@ void publishCipherData(const CipherPacket &pkt)
         Serial.println("reconnect");
     }
 
+    Serial.print("[MQTT] CIPHER DATA TO SEND: ");
+    for(uint8_t i = 0; i< SECURE_DATA_TOTAL_LEN; i++)
+    {
+    Serial.print(pkt.data[i], HEX);
+    Serial.print(" ");
+    }
+    Serial.println();
+
     char topic[64];
     snprintf(topic, sizeof(topic), "bridge/%d/cipher", AREA_ID);
 
@@ -108,20 +116,20 @@ void publishCipherData(const CipherPacket &pkt)
     );
 
     if (n < 0 || n >= (int)sizeof(json)) {
-        Serial.println("❌ JSON truncated/oversize");
+        Serial.println("[MQTT] JSON truncated/oversize");
         return;
     }
 
     bool ok = client.publish(topic, json);
     if (ok) {
-        Serial.println("✅ MQTT cipher published");
+        Serial.println("[MQTT] MQTT cipher published");
     } else {
-        Serial.println("⚠️ MQTT publish failed (cipher)");
+        Serial.println("[MQTT] MQTT publish failed (cipher)");
     }
 }
 void reconnect()
 {
-    client.connect("ESP32_clientID");
+    client.connect("[MQTT] ESP32_clientID");
 
     while (!client.connected()) {
         Serial.println("Attempting MQTT connection...");

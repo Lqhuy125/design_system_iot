@@ -90,7 +90,7 @@ void setup() {
                           &hMqttPush,
                           0);
 
-  Serial.println("RTOS pipeline started: TDMA -> TX Beacon -> RX -> Push Data");
+  Serial.println("[MAIN] RTOS pipeline started: TDMA -> TX Beacon -> RX Data -> Push Data");
 }
 
 void loop() {
@@ -107,7 +107,7 @@ void loop() {
 
 /*======================== TDMA Scheduler ====================*/
 void tdma_scheduler_task(void* pv) {
-  Serial.println("tdma_scheduler_task");
+  Serial.println("[MAIN] TDMA scheduler task");
   (void)pv;
   const uint32_t FRAME_MS = (uint32_t)cfg.slot_len_ms * cfg.total_slots;
   TickType_t lastWake = xTaskGetTickCount();
@@ -118,7 +118,7 @@ void tdma_scheduler_task(void* pv) {
   /* Gửi beacon khởi động */
   {
     radioMode = RADIO_TX;
-    Serial.println("tdma_send_beacon_broadcast");
+    Serial.println("[MAIN] TDMA send beacon broadcast");
 
     transmissionState = tdma_send_beacon_broadcast( frame_id,
                                                     cfg.slot_len_ms,
@@ -136,7 +136,7 @@ void tdma_scheduler_task(void* pv) {
   }
   txDoneFlag = false;
   if (transmissionState == RADIOLIB_ERR_NONE) {
-    Serial.println("transmission finished!");
+    Serial.println("[MAIN] Transmission beacon finished!");
   } else {
     Serial.println("failed, code :");  Serial.print(transmissionState);
   }
@@ -161,7 +161,7 @@ void tdma_scheduler_task(void* pv) {
     while (!txDoneFlag) { vTaskDelay(pdMS_TO_TICKS(1)); }
     txDoneFlag = false;
     if (transmissionState == RADIOLIB_ERR_NONE) {
-      Serial.println("transmission finished!");
+      Serial.println("[MAIN] transmission finished!");
     } else {
       Serial.println("failed, code:");
       Serial.println(transmissionState);
@@ -178,22 +178,23 @@ void tdma_scheduler_task(void* pv) {
 
 void lora_process_task(void* pv) {
   (void)pv;
-  Serial.println("lora_process_task");
+  Serial.println("[MAIN] Lora process task");
   uint8_t  rxBuf[SECURE_DATA_TOTAL_LEN];
-  IMUSample s;
-
+  /* IMUSample s; */
+  CipherPacket cpk;
   for (;;) {
 
     if (rxDoneFlag) {
       // Clear cờ trước khi xử lý
       rxDoneFlag = false;
       // Đọc dữ liệu an toàn
-      int state = radio.readData(rxBuf, SECURE_DATA_TOTAL_LEN);
+      int state = radio.readData(cpk.data, SECURE_DATA_TOTAL_LEN);
+      cpk.timestamp = millis();
 
       Serial.print("[LORA] CIPHER DATA RECIEVE: ");
       for(uint8_t i = 0; i< SECURE_DATA_TOTAL_LEN; i++)
       {
-        Serial.print(rxBuf[i], HEX);
+        Serial.print(cpk.data[i], HEX);
         Serial.print(" ");
       }
       Serial.println();
@@ -205,14 +206,14 @@ void lora_process_task(void* pv) {
           }
         } */
         // Send cipher packet directly to MQTT queue (no decryption)
-        if (xQueueSend(gMqttQueue, &rxBuf, 0) != pdTRUE) {
-          Serial.println("⚠️ gMqttQueue full, drop packet");
+        if (xQueueSend(gMqttQueue, &cpk, 0) != pdTRUE) {
+          Serial.println("[MAIN] gMqttQueue full, drop packet");
         } else {
-          Serial.println("✅ Cipher packet queued for MQTT");
+          Serial.println("[MAIN] Cipher packet queued for MQTT");
         }
       }
       else {
-        Serial.println("RX readData error:");
+        Serial.println("[MAIN] RX readData error:");
         Serial.println(state);
       }
     }
@@ -222,14 +223,16 @@ void lora_process_task(void* pv) {
 
 void mqtt_push_task(void* pv) {
   (void)pv;
+  Serial.println("[MAIN] Pushing MQTT task");
   /* IMUSample s; */
+  CipherPacket cpk;
   uint32_t lastLoop = 0;
   uint32_t lastPrint = 0;
   uint32_t cnt_loop = 0;
   // Serial.println("Checkpoint3");
   for (;;) {
     // 1) chờ sample cần publish
-    if (xQueueReceive(gMqttQueue, &s, portMAX_DELAY) == pdTRUE) {
+    if (xQueueReceive(gMqttQueue, &cpk, portMAX_DELAY) == pdTRUE) {
 
       if (millis() - lastPrint >= 50) {
           lastPrint = millis();
@@ -240,7 +243,7 @@ void mqtt_push_task(void* pv) {
           if (client.connected())
           {
             /* publishNodeData(s); */
-            publishCipherData(rxBuf);
+            publishCipherData(cpk);
           }
       }
     }

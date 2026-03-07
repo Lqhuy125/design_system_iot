@@ -177,12 +177,12 @@ bool secure_data_encrypt(const IMUSample& sample, uint8_t cipher_out[SECURE_DATA
 
     uint8_t data_len = serializeIMUSample(sample, plaintext);
 
-    Serial.print("[ENCRYPT] PLAIN DATA: ");
+    /* Serial.print("[ENCRYPT] PLAIN DATA: ");
     for (int i = 0; i < data_len; i++) {
         Serial.print(plaintext[i], HEX);
         Serial.print(" ");
     }
-    Serial.println();
+    Serial.println(); */
     // 2) Compute CMAC on serialized data
     uint8_t full_cmac[16];
     aes_cmac_128(DATA_MIC_KEY, plaintext, data_len, full_cmac);
@@ -197,30 +197,30 @@ bool secure_data_encrypt(const IMUSample& sample, uint8_t cipher_out[SECURE_DATA
         plaintext[i] = 0;
     }
 
-    Serial.print("[ENCRYPT] PLAIN DATA AFTER CMAC AND PADDING: ");
+    /* Serial.print("[ENCRYPT] PLAIN DATA AFTER CMAC AND PADDING: ");
     for (int i = 0; i < SECURE_DATA_TOTAL_LEN; i++) {
         Serial.print(plaintext[i], HEX);
         Serial.print(" ");
-    }
+    } */
 
     // 5) Encrypt with AES-128-CBC
     aes_cbc_encrypt(DATA_AES_KEY, DATA_IV, plaintext, cipher_out, SECURE_DATA_TOTAL_LEN);
 
-    Serial.print("[ENCRYPT] CIPHER DATA: ");
+    /* Serial.print("[ENCRYPT] CIPHER DATA: ");
     for (int i = 0; i < SECURE_DATA_TOTAL_LEN; i++) {
         Serial.print(cipher_out[i], HEX);
         Serial.print(" ");
     }
-    Serial.println();
+    Serial.println(); */
     
-    Serial.print("[ENCRYPT] Data len: ");
+    /* Serial.print("[ENCRYPT] Data len: ");
     Serial.println(data_len);
     Serial.print("[ENCRYPT] MIC: ");
     for (int i = 0; i < SECURE_DATA_MIC_LEN; i++) {
         Serial.print(full_cmac[i], HEX);
         Serial.print(" ");
     }
-    Serial.println();
+    Serial.println(); */
 
     return true;
 }
