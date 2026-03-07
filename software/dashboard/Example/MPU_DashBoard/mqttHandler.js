@@ -20,7 +20,8 @@
   client.on("connect", () => {
     console.log("✅ Connected to MQTT broker (WSS)", MQTT_WSS_URL);
     // Subscribe IMU JSON: bridge/<area>/<node>/imu
-    client.subscribe("bridge/+/+/imu", { qos: 1 }, (err) => {
+    // client.subscribe("bridge/+/+/imu", { qos: 1 }, (err) => {
+    client.subscribe("bridge/+/cipher", { qos: 1 }, (err) => {
       if (err) console.error("❌ Subscribe error:", err);
     });
   });
@@ -31,10 +32,11 @@
 
   function nodeIdToIndex(nodeIdStr) {
     // "N01" -> 0, "N12" -> 11; nếu chỉ là "1" -> 0
-    const m = String(nodeIdStr).match(/^N?(\d+)$/i);
+    /* const m = String(nodeIdStr).match(/^N?(\d+)$/i);
     if (!m) return 0;
     const idNum = parseInt(m[1], 10);
-    return Math.max(0, Math.min(MAX_NODES - 1, idNum - 1));
+    return Math.max(0, Math.min(MAX_NODES - 1, idNum - 1)); */
+    return Math.max(0, Math.min(MAX_NODES - 1, (parseInt(id) || 1) - 1));
   }
 
   // Gọi updateChart nếu có sẵn ở app.js
@@ -51,7 +53,7 @@
     // Debug payload (bật khi cần)
     // console.log("[MQTT] msg on", topic, "payload:", buf.toString());
 
-    const m = topic.match(/^bridge\/([^/]+)\/([^/]+)\/imu$/);
+    /* const m = topic.match(/^bridge\/([^/]+)\/([^/]+)\/imu$/);
     if (!m) return;
 
     const nodeStr = m[2]; // ví dụ "N01"
@@ -63,8 +65,43 @@
     } catch (e) {
       console.warn("⚠️ JSON parse error:", e);
       return;
+    } */
+
+    const match = topic.match(/^bridge\/([^/]+)\/cipher$/);
+    if (!match) return;
+
+    const areaId = match[1];
+    const payloadStr = payload.toString().trim();
+
+    console.log(`\n${"═".repeat(50)}`);
+    console.log(`📨 Topic: ${topic}`);
+    console.log(`📨 Payload: ${payloadStr.slice(0, 100)}...`);
+
+  try {
+    const msg = JSON.parse(payloadStr);
+
+    if (!msg.cipher) {
+      console.warn("⚠️ Missing 'cipher' field");
+      return;
     }
 
+    // Decrypt and verify using crypto.js
+    const result = await window.CryptoUtils.decryptCipherData(msg.cipher);
+
+    if (!result.success) {
+      console.error("❌ Decrypt failed:", result.error);
+      // Show error in UI if needed
+      return;
+    }
+
+    const imu = result.imu;
+    const nodeId = formatNodeId(imu.id);
+    const nodeIndex = nodeIdToIndex(imu.id);
+
+    console.log(`✅ Decrypted [${nodeId}]:`);
+    console.log(`   ax=${imu.ax.toFixed(3)} ay=${imu.ay.toFixed(3)} az=${imu.az.toFixed(3)}`);
+    console.log(`   gx=${imu.gx.toFixed(2)} gy=${imu.gy.toFixed(2)} gz=${imu.gz.toFixed(2)}`);
+    console.log(`   dt=${imu.dt.toFixed(3)} t_s=${imu.t_s}`);
     // Chỉ cập nhật acc/gyro theo yêu cầu
     if (typeof msg.ax === "number") safeUpdateChart("accX",  nodeIndex, msg.ax);
     if (typeof msg.ay === "number") safeUpdateChart("accY",  nodeIndex, msg.ay);
