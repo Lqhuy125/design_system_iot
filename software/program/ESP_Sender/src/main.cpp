@@ -143,7 +143,8 @@ void lora_process_task(void* pv) {
           // 5) TX trong slot
           setModeTX();                           // báo chế độ cho ISR
           uint32_t t0 = micros();
-          lora_send_imusample(s);                // hàm này đã standby + delay + startReceive
+          // lora_send_imusample(s);                // hàm này đã standby + delay + startReceive
+          lora_send_imusample_secure(s);
           uint32_t t1 = micros();
           // Serial.println(rxDoneFlag);
           // 6) Luôn quay lại RX

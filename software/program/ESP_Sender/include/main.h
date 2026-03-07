@@ -8,6 +8,7 @@
 #include "Sensor.h"
 #include "Custom_Lora.h"
 #include "secure_beacon.h"
+#include "secure_data.h"
 
 /* Library for freeRTOS */
 #include "freertos/FreeRTOS.h"

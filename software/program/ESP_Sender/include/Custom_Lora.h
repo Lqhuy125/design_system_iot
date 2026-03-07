@@ -47,4 +47,5 @@ static int deserializeIMUSample(IMUSample& s, const uint8_t *buffer);
 void radio_config_beacon();
 void radio_config_uplink();
 
+void lora_send_imusample_secure(const IMUSample& s);
 #endif
