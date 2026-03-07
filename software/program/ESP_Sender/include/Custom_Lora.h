@@ -36,12 +36,12 @@ uint32_t calcCRC32(const void *data, size_t length);
 
 /* Send Lora */
 void lora_send_imusample(const IMUSample& s);
-static int serializeIMUSample(const IMUSample& s, uint8_t* out);
+int serializeIMUSample(const IMUSample& s, uint8_t* out);
 
 /* Recieve Lora */
 void lora_recieve_imusample(IMUSample &s);
 extern void publishNodeData(const IMUSample &d);
-static int deserializeIMUSample(IMUSample& s, const uint8_t *buffer);
+int deserializeIMUSample(IMUSample& s, const uint8_t *buffer);
 
 
 void radio_config_beacon();

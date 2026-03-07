@@ -3,19 +3,24 @@
 #include <mbedtls/aes.h>
 #include <Arduino.h>
 
+extern int serializeIMUSample(const IMUSample& s, uint8_t* out);
+extern int deserializeIMUSample(IMUSample& s, const uint8_t *buffer);
 // AES-128 key for data encryption (should be different from beacon key)
+/* 3132333435363738393A3B3C3D3E3F40 */
 static const uint8_t DATA_AES_KEY[16] = {
     0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38,
     0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F, 0x40
 };
 
 // Key for CMAC MIC calculation
+/* 4142434445464748494A4B4C4D4E4F50 */
 static const uint8_t DATA_MIC_KEY[16] = {
     0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48,
     0x49, 0x4A, 0x4B, 0x4C, 0x4D, 0x4E, 0x4F, 0x50
 };
 
 // IV for CBC mode (can be fixed or derived from frame_id for replay protection)
+/* 000102030405060708090A0B0C0D0E0F */
 static const uint8_t DATA_IV[16] = {
     0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
     0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F
@@ -130,7 +135,7 @@ static void aes_cmac_128(const uint8_t key[16],
 
 // ============== Serialize/Deserialize IMUSample ==============
 
-static size_t serializeIMUSample(const IMUSample& s, uint8_t* buffer)
+/* static size_t serializeIMUSample(const IMUSample& s, uint8_t* buffer)
 {
     size_t idx = 0;
 
@@ -145,9 +150,9 @@ static size_t serializeIMUSample(const IMUSample& s, uint8_t* buffer)
     memcpy(&buffer[idx], &s.t_s, sizeof(s.t_s)); idx += sizeof(s.t_s);
 
     return idx;
-}
+} */
 
-static void deserializeIMUSample(IMUSample& s, const uint8_t* buffer)
+/* static void deserializeIMUSample(IMUSample& s, const uint8_t* buffer)
 {
     size_t idx = 0;
 
@@ -160,7 +165,7 @@ static void deserializeIMUSample(IMUSample& s, const uint8_t* buffer)
     memcpy(&s.gz, &buffer[idx], sizeof(s.gz));   idx += sizeof(s.gz);
     memcpy(&s.dt, &buffer[idx], sizeof(s.dt));   idx += sizeof(s.dt);
     memcpy(&s.t_s, &buffer[idx], sizeof(s.t_s)); idx += sizeof(s.t_s);
-}
+} */
 
 // ============== Public API ==============
 
@@ -170,8 +175,14 @@ bool secure_data_encrypt(const IMUSample& sample, uint8_t cipher_out[SECURE_DATA
     uint8_t plaintext[SECURE_DATA_TOTAL_LEN];
     memset(plaintext, 0, sizeof(plaintext));
 
-    size_t data_len = serializeIMUSample(sample, plaintext);
+    uint8_t data_len = serializeIMUSample(sample, plaintext);
 
+    Serial.print("[ENCRYPT] PLAIN DATA: ");
+    for (int i = 0; i < data_len; i++) {
+        Serial.print(plaintext[i], HEX);
+        Serial.print(" ");
+    }
+    Serial.println();
     // 2) Compute CMAC on serialized data
     uint8_t full_cmac[16];
     aes_cmac_128(DATA_MIC_KEY, plaintext, data_len, full_cmac);
@@ -183,12 +194,25 @@ bool secure_data_encrypt(const IMUSample& sample, uint8_t cipher_out[SECURE_DATA
     // Data is 33 bytes, we pad to 32, then add 4 MIC = 36 bytes
     // We need to encrypt 48 bytes (3 blocks), so pad 36->48 with zeros or 0x0C
     for (size_t i = SECURE_DATA_PAYLOAD_LEN + SECURE_DATA_MIC_LEN; i < SECURE_DATA_TOTAL_LEN; i++) {
-        plaintext[i] = 0x00;
+        plaintext[i] = 0;
+    }
+
+    Serial.print("[ENCRYPT] PLAIN DATA AFTER CMAC AND PADDING: ");
+    for (int i = 0; i < SECURE_DATA_TOTAL_LEN; i++) {
+        Serial.print(plaintext[i], HEX);
+        Serial.print(" ");
     }
 
     // 5) Encrypt with AES-128-CBC
     aes_cbc_encrypt(DATA_AES_KEY, DATA_IV, plaintext, cipher_out, SECURE_DATA_TOTAL_LEN);
 
+    Serial.print("[ENCRYPT] CIPHER DATA: ");
+    for (int i = 0; i < SECURE_DATA_TOTAL_LEN; i++) {
+        Serial.print(cipher_out[i], HEX);
+        Serial.print(" ");
+    }
+    Serial.println();
+    
     Serial.print("[ENCRYPT] Data len: ");
     Serial.println(data_len);
     Serial.print("[ENCRYPT] MIC: ");
