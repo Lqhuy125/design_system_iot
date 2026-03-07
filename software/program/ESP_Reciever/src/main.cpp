@@ -65,7 +65,7 @@ void setup() {
   /* Create queues Rx->Agg->MQTT */
   gRxQueue   = xQueueCreate(/*len=*/128, sizeof(IMUSample));
   // gMqttQueue = xQueueCreate(/*len=*/128, sizeof(IMUSample));
-  gMqttQueue = xQueueCreate(/*len=*/128, sizeof(IMUSample));
+  gMqttQueue = xQueueCreate(/*len=*/128, sizeof(CipherPacket));
 
   /* Create tasks, pin to cores (ESP32: core 0 & 1) */
   xTaskCreatePinnedToCore(lora_process_task,
