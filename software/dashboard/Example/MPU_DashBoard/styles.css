@@ -67,7 +67,7 @@ body{margin:0;background:var(--bg);font-family:Inter,system-ui,-apple-system,"Se
 {
   display:grid;
   /* Độ rộng của cột */
-  grid-template-columns:70px 130px 150px 150px 160px 120px 1fr
+  grid-template-columns:70px 130px 150px 150px 1fr
 }
 .table-head{background:#f0f7ff;
   color:#173a8a;
