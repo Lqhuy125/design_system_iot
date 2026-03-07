@@ -30,6 +30,7 @@
 
 static const int IMU_PAYLOAD_LEN = 33;               // id + ax..gz + dt + t_s
 static const int IMU_TOTAL_LEN   = IMU_PAYLOAD_LEN + sizeof(uint32_t); // + CRC32 = 37
+#define SECURE_DATA_TOTAL_LEN    48   // 3 x 16-byte AES blocks
 
 extern void publishNodeData(const IMUSample &d);
 

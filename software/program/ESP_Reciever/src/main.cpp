@@ -179,7 +179,7 @@ void tdma_scheduler_task(void* pv) {
 void lora_process_task(void* pv) {
   (void)pv;
   Serial.println("lora_process_task");
-  uint8_t  rxBuf[IMU_TOTAL_LEN];
+  uint8_t  rxBuf[SECURE_DATA_TOTAL_LEN];
   IMUSample s;
 
   for (;;) {
@@ -188,7 +188,15 @@ void lora_process_task(void* pv) {
       // Clear cờ trước khi xử lý
       rxDoneFlag = false;
       // Đọc dữ liệu an toàn
-      int state = radio.readData(rxBuf, IMU_TOTAL_LEN);
+      int state = radio.readData(rxBuf, SECURE_DATA_TOTAL_LEN);
+
+      Serial.print("[LORA] CIPHER DATA RECIEVE: ");
+      for(uint8_t i = 0; i< SECURE_DATA_TOTAL_LEN; i++)
+      {
+        Serial.print(rxBuf[i], HEX);
+        Serial.print(" ");
+      }
+      Serial.println();
 
       if (state == RADIOLIB_ERR_NONE) {
         if (deserializeIMUSample(s, rxBuf, IMU_TOTAL_LEN)) {
