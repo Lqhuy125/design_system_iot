@@ -40,10 +40,10 @@ static void aes_ecb_encrypt_block(const uint8_t key[16],
 // 3) CMAC (RFC 4493) - Tự cài đầy đủ
 // ------------------------------------------------------------
 static const uint8_t CMAC_Rb[16] =
-{0x00,0x00,0x00,0x00,
- 0x00,0x00,0x00,0x00,
- 0x00,0x00,0x00,0x00,
- 0x00,0x00,0x00,0x87};
+{
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x87
+};
 
 static void leftshift128(const uint8_t in[16], uint8_t out[16]) {
     uint8_t carry = 0;
@@ -79,7 +79,7 @@ static void aes_cmac_128(const uint8_t key[16],
     if (n == 0) { n=1; last_complete=0; }
 
     uint8_t X[16] = {0}, Y[16], blk[16];
-    
+
     // 3a) CBC-MAC 0..n-2
     for (size_t i=0; i<n-1; i++) {
         memcpy(blk, msg + i*16, 16);
@@ -116,7 +116,7 @@ bool secure_beacon_encrypt(uint8_t input_test[16], const TDMABeacon* b, uint8_t 
     uint8_t raw[sizeof(TDMABeacon)];
     memcpy(raw, b, sizeof(TDMABeacon));
     /* This line open to test input */
-    memcpy(raw, input_test, 16);
+    // memcpy(raw, input_test, 16);
 
     // 2) MIC = 4 byte đầu của CMAC(MIC_KEY, beacon_without_crc)
     const size_t LEN_WO_CRC = sizeof(TDMABeacon) - sizeof(uint32_t);
@@ -128,7 +128,7 @@ bool secure_beacon_encrypt(uint8_t input_test[16], const TDMABeacon* b, uint8_t 
     for (int i = 0; i < 16; i++) {
         Serial.print(full_cmac[i], HEX);
         Serial.print(" ");
-    } 
+    }
     Serial.println();
     /* overwrite 4 byte MIC to CRC field */
     memcpy(raw + LEN_WO_CRC, full_cmac, MIC_LEN);  // MIC_LEN=4
@@ -139,7 +139,7 @@ bool secure_beacon_encrypt(uint8_t input_test[16], const TDMABeacon* b, uint8_t 
     for (int i = 0; i < 16; i++) {
         Serial.print(out[i], HEX);
         Serial.print(" ");
-    } 
+    }
     Serial.println();
     return true;
 }
