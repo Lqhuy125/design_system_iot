@@ -1,7 +1,34 @@
 {
 	"folders": [
 		{
+			"path": "software/program/ESP_Reciever"
+		},
+		{
+			"path": "software/program/ESP_Sender"
+		},
+		{
+			"path": "software/program/Node1_Master_ESP32"
+		},
+		{
+			"path": "software/program/Node2_Slave_MPU6050"
+		},
+		{
+			"path": "software/program/Node3_Slave_UNOR3_MPU6050"
+		},
+		{
+			"path": "software/program/Node4_Slave_Lora_MPU_Stm32f103"
+		},
+		{
+			"path": "software/program/Recieve_Node_ESP32_Lora"
+		},
+		{
+			"path": "software/program/Wiring"
+		},
+		{
 			"path": "."
 		}
-	]
+	],
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "design_system_iot"
+	}
 }

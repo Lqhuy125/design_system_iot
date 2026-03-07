@@ -61,42 +61,71 @@ static  bool tdma_beacon_deserialize(TDMABeacon &out, const uint8_t* buf, size_t
 bool lora_receive_beacon(TDMABeacon& out) {
   xSemaphoreTake(gLoraMutex, portMAX_DELAY);
   radio_config_beacon();
-  uint8_t buf[BEACON_TOTAL_LEN];
-  int state = radio.readData(buf, BEACON_TOTAL_LEN);
+
+  // Read encrypted beacon (16 bytes)
+  uint8_t cipher[SECURE_BEACON_LEN];
+  int state = radio.readData(cipher, SECURE_BEACON_LEN);
+
   radio_config_uplink();
-  for (int i=0; i<sizeof(TDMABeacon); i++) {
-      Serial.print(buf[i], HEX); Serial.print(" ");
+  Serial.print("[RX] Cipher: ");
+  for (int i = 0; i < SECURE_BEACON_LEN; i++) {
+      Serial.print(cipher[i], HEX);
+      Serial.print(" ");
   }
-  if (state != RADIOLIB_ERR_NONE) return false;
+  Serial.println();
+
+  if (state != RADIOLIB_ERR_NONE) {
+      Serial.print("[RX] Read error: ");
+      Serial.println(state);
+      xSemaphoreGive(gLoraMutex);
+      return false;
+  }
 
   int len = radio.getPacketLength();
-  if ((len != BEACON_TOTAL_LEN) || (buf[0] != 0xAA)) return false;
-
-  if (!tdma_beacon_deserialize(out, buf, BEACON_TOTAL_LEN)) 
+  if ((len != BEACON_TOTAL_LEN))
   {
-    Serial.println("Deserialize error");
+    Serial.print("[RX] Invalid length: ");
+    Serial.println(len);
+    xSemaphoreGive(gLoraMutex);
     return false;
   }
-  
+
+  // Decrypt and verify MIC
+  if (!secure_beacon_decrypt(cipher, &out)) {
+      Serial.println("[RX] Decrypt/MIC failed");
+      xSemaphoreGive(gLoraMutex);
+      return false;
+  }
+
   vTaskDelay(pdMS_TO_TICKS(2));
   xSemaphoreGive(gLoraMutex);
+
   return true;
 }
 
 
 uint8_t tdma_choose_slot(uint8_t my_id, const TDMABeacon& b) {
-  // Broadcast: mỗi node tự ánh xạ theo ID (tránh 0)
+  // Broadcast mode: each node maps by ID
   if (b.node_id == 0) {
-    if (b.total_slots == 0) return 0;
-    uint8_t idx = (uint8_t)((my_id > 0 ? (my_id - 1) : 0) % b.total_slots);
-    return idx;
+      if (b.total_slots == 0) return 0;
+      uint8_t idx = (uint8_t)((my_id > 0 ? (my_id - 1) : 0) % b.total_slots);
+      Serial.print("[TDMA] Broadcast mode, my slot: ");
+      Serial.println(idx);
+      return idx;
   }
   // Targeted: slot = node_id - 1 theo mô tả trong header
   // (chỉ node có ID phù hợp mới nên TX ở frame này)
-  if (b.node_id > 0) {
-    return (uint8_t)(b.node_id - 1);
+  // Targeted mode: only specific node transmits
+  if (b.node_id == my_id) {
+      uint8_t idx = (uint8_t)(b.node_id - 1);
+      Serial.print("[TDMA] Targeted mode, my slot: ");
+      Serial.println(idx);
+      return idx;
   }
-  return 0;
+
+  // Not my turn
+  Serial.println("[TDMA] Not my slot this frame");
+  return 0xFF;  // Invalid slot marker
 }
 
 
