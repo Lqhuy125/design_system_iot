@@ -50,10 +50,12 @@ static  bool tdma_beacon_deserialize(TDMABeacon &out, const uint8_t* buf, size_t
   memcpy(&out.total_slots,      &buf[idx], sizeof(out.total_slots));      idx += sizeof(out.total_slots);
   out.crc = recv_crc;   // lưu lại CRC ứng dụng nếu struct có trường crc
 
+#if DEBUG_APP == 1
   for (int i=0; i<sizeof(TDMABeacon); i++) {
       Serial.print(buf[i], HEX); Serial.print(" ");
   }
   Serial.println(" ");
+#endif
   return true;
 
 }
@@ -67,12 +69,15 @@ bool lora_receive_beacon(TDMABeacon& out) {
   int state = radio.readData(cipher, SECURE_BEACON_LEN);
 
   radio_config_uplink();
-  /* Serial.print("[RX] Cipher: ");
+
+#if DEBUG_APP == 1
+  Serial.print("[RX] Cipher: ");
   for (int i = 0; i < SECURE_BEACON_LEN; i++) {
       Serial.print(cipher[i], HEX);
       Serial.print(" ");
   }
-  Serial.println(); */
+  Serial.println();
+#endif
 
   if (state != RADIOLIB_ERR_NONE) {
       Serial.print("[RX] Read error: ");

@@ -178,9 +178,9 @@ int deserializeIMUSample(IMUSample& s, const uint8_t *buffer) {
   memcpy(&s.t_s, &buffer[idx], sizeof(s.t_s));    idx += sizeof(s.t_s);
   memcpy(&s.crc, &buffer[idx], sizeof(s.crc));      idx += sizeof(s.crc);
 
-  for (int i=0; i<sizeof(IMUSample); i++) {
+  /* for (int i=0; i<sizeof(IMUSample); i++) {
       Serial.print(buffer[i], HEX); Serial.print(" ");
-  }
+  } */
   return idx;
 }
 

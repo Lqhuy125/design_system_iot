@@ -30,13 +30,18 @@
   client.on("close", () => console.log("✖ MQTT connection closed"));
   client.on("error", (err) => console.error("❌ MQTT error:", err?.message || err));
 
+  function formatNodeId(id){
+    const n = (typeof id === 'number') ? id : parseInt(String(id).replace(/\D/g,''),10);
+    if (!Number.isFinite(n)) return String(id);
+    return 'N' + String(n).padStart(2,'0');
+  }
   function nodeIdToIndex(nodeIdStr) {
     // "N01" -> 0, "N12" -> 11; nếu chỉ là "1" -> 0
     /* const m = String(nodeIdStr).match(/^N?(\d+)$/i);
     if (!m) return 0;
     const idNum = parseInt(m[1], 10);
     return Math.max(0, Math.min(MAX_NODES - 1, idNum - 1)); */
-    return Math.max(0, Math.min(MAX_NODES - 1, (parseInt(id) || 1) - 1));
+    return Math.max(0, Math.min(MAX_NODES - 1, (parseInt(nodeIdStr) || 1) - 1));
   }
 
   // Gọi updateChart nếu có sẵn ở app.js
@@ -49,7 +54,7 @@
     }
   }
 
-  client.on("message", (topic, buf) => {
+  // client.on("message", (topic, payload) => {
     // Debug payload (bật khi cần)
     // console.log("[MQTT] msg on", topic, "payload:", buf.toString());
 
@@ -66,63 +71,63 @@
       console.warn("⚠️ JSON parse error:", e);
       return;
     } */
+  client.on('message', async (topic, payload) => {
+    try{
+      const m = topic.match(/^bridge\/([^/]+)\/cipher$/);
+      if (!m) return; // not our topic
+      const areaId = m[1];
 
-    const match = topic.match(/^bridge\/([^/]+)\/cipher$/);
-    if (!match) return;
+      const text = payload.toString('utf8').trim();
+      if (!text) return;
+      let msg;
+      try { msg = JSON.parse(text); } catch(e){ console.warn('⚠️ JSON parse error:', e); return; }
 
-    const areaId = match[1];
-    const payloadStr = payload.toString().trim();
+      if (!msg.cipher || typeof msg.cipher !== 'string'){
+        console.warn("⚠️ Missing 'cipher' field in payload", msg);
+        return;
+      }
 
-    console.log(`\n${"═".repeat(50)}`);
-    console.log(`📨 Topic: ${topic}`);
-    console.log(`📨 Payload: ${payloadStr.slice(0, 100)}...`);
+      console.groupCollapsed(`📥 MQTT bridge/${areaId}/cipher`);
+      console.log('raw:', text);
 
-  try {
-    const msg = JSON.parse(payloadStr);
+      const result = await window.CryptoUtils.decryptCipherData(msg.cipher);
+      if (!result.success){
+        console.warn('❗ Decrypt/MIC failed:', result.error);
+        if (result.imu) console.log('IMU (untrusted):', result.imu);
+        console.groupEnd();
+        return;
+      }
 
-    if (!msg.cipher) {
-      console.warn("⚠️ Missing 'cipher' field");
-      return;
-    }
+      const imu = result.imu;
+      const nodeIndex = nodeIdToIndex(imu.id);
+      const nodeLabel = formatNodeId(imu.id);
 
-    // Decrypt and verify using crypto.js
-    const result = await window.CryptoUtils.decryptCipherData(msg.cipher);
+      console.log('✅ Decrypted', {areaId, ts: msg.ts, len: msg.len, micValid: result.micValid});
+      console.log(`IMU ${nodeLabel}: ax=${imu.ax?.toFixed?.(3)} ay=${imu.ay?.toFixed?.(3)} az=${imu.az?.toFixed?.(3)}`);
+      console.log(`           gx=${imu.gx?.toFixed?.(2)} gy=${imu.gy?.toFixed?.(2)} gz=${imu.gz?.toFixed?.(2)} dt=${imu.dt?.toFixed?.(3)} t_s=${imu.t_s}`);
+      console.groupEnd();
 
-    if (!result.success) {
-      console.error("❌ Decrypt failed:", result.error);
-      // Show error in UI if needed
-      return;
-    }
+      // Update charts if your UI provides updateChart(chartKey, nodeIndex, value)
+      if (Number.isFinite(imu.ax)) safeUpdateChart('accX', nodeIndex, imu.ax);
+      if (Number.isFinite(imu.ay)) safeUpdateChart('accY', nodeIndex, imu.ay);
+      if (Number.isFinite(imu.az)) safeUpdateChart('accZ', nodeIndex, imu.az);
+      if (Number.isFinite(imu.gx)) safeUpdateChart('gyroX', nodeIndex, imu.gx);
+      if (Number.isFinite(imu.gy)) safeUpdateChart('gyroY', nodeIndex, imu.gy);
+      if (Number.isFinite(imu.gz)) safeUpdateChart('gyroZ', nodeIndex, imu.gz);
 
-    const imu = result.imu;
-    const nodeId = formatNodeId(imu.id);
-    const nodeIndex = nodeIdToIndex(imu.id);
-
-    console.log(`✅ Decrypted [${nodeId}]:`);
-    console.log(`   ax=${imu.ax.toFixed(3)} ay=${imu.ay.toFixed(3)} az=${imu.az.toFixed(3)}`);
-    console.log(`   gx=${imu.gx.toFixed(2)} gy=${imu.gy.toFixed(2)} gz=${imu.gz.toFixed(2)}`);
-    console.log(`   dt=${imu.dt.toFixed(3)} t_s=${imu.t_s}`);
-    // Chỉ cập nhật acc/gyro theo yêu cầu
-    if (typeof msg.ax === "number") safeUpdateChart("accX",  nodeIndex, msg.ax);
-    if (typeof msg.ay === "number") safeUpdateChart("accY",  nodeIndex, msg.ay);
-    if (typeof msg.az === "number") safeUpdateChart("accZ",  nodeIndex, msg.az);
-    if (typeof msg.gx === "number") safeUpdateChart("gyroX", nodeIndex, msg.gx);
-    if (typeof msg.gy === "number") safeUpdateChart("gyroY", nodeIndex, msg.gy);
-    if (typeof msg.gz === "number") safeUpdateChart("gyroZ", nodeIndex, msg.gz);
-
-    // Không cập nhật temp/battery theo yêu cầu hiện tại.
-
-    /*  */
-    if (typeof window.appendSummaryRow === "function") {
-      window.appendSummaryRow({
-        nodeId: nodeStr,
-        ax: msg.ax, ay: msg.ay, az: msg.az,
-        gx: msg.gx, gy: msg.gy, gz: msg.gz,
-        temp: msg.temp,
-      });
+      if (typeof window.appendSummaryRow === 'function'){
+        window.appendSummaryRow({
+          nodeId: nodeLabel, areaId, ts: msg.ts,
+          ax: imu.ax, ay: imu.ay, az: imu.az,
+          gx: imu.gx, gy: imu.gy, gz: imu.gz,
+          dt: imu.dt, t_s: imu.t_s,
+        });
+      }
+    }catch(err){
+      console.error('Unhandled MQTT message error:', err);
     }
   });
 
-  // expose client để debug
+  // Expose for debugging
   window.__mqttClient = client;
 })();

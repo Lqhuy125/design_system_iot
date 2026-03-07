@@ -32,7 +32,7 @@ const CMAC_RB = new Uint8Array([
 ]);
 
 // ===== Constants (match secure_data.h) =====
-const SECURE_DATA_PAYLOAD_LEN = 32;  // IMU data length for MIC placement
+const SECURE_DATA_PAYLOAD_LEN = 33;  // IMU data length for MIC placement
 const SECURE_DATA_MIC_LEN = 4;       // 4 bytes MIC
 const SECURE_DATA_TOTAL_LEN = 48;    // 3 AES blocks
 const IMU_SERIALIZED_LEN = 33;       // id(1) + ax,ay,az,gx,gy,gz,dt,t_s (8*4=32) = 33
@@ -244,7 +244,7 @@ async function decryptCipherData(cipherHex) {
     const ciphertext = hexToBytes(cipherHex);
 
     console.log("🔐 Cipher length:", ciphertext.length, "bytes");
-    console.log("🔐 Cipher:", bytesToHex(ciphertext.slice(0, 16)), "...");
+    console.log("🔐 Cipher:", bytesToHex(ciphertext));
 
     if (ciphertext.length !== SECURE_DATA_TOTAL_LEN) {
       return {

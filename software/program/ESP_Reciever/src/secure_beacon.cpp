@@ -124,22 +124,24 @@ bool secure_beacon_encrypt(uint8_t input_test[16], const TDMABeacon* b, uint8_t 
     uint8_t full_cmac[16];
     /* Cmac generate with plain data */
     aes_cmac_128(MIC_KEY, raw, LEN_WO_CRC, full_cmac);
-
-    for (int i = 0; i < 16; i++) {
+#if DEBUG_APP == 1
+    /* for (int i = 0; i < 16; i++) {
         Serial.print(full_cmac[i], HEX);
         Serial.print(" ");
     }
-    Serial.println();
+    Serial.println(); */
+#endif
     /* overwrite 4 byte MIC to CRC field */
     memcpy(raw + LEN_WO_CRC, full_cmac, MIC_LEN);  // MIC_LEN=4
 
     // 3) Encrypt AES-ECB block 16B
     aes_ecb_encrypt_block(BEACON_AES_KEY, raw, out);
-
-    for (int i = 0; i < 16; i++) {
+#if DEBUG_APP == 1
+    /* for (int i = 0; i < 16; i++) {
         Serial.print(out[i], HEX);
         Serial.print(" ");
     }
-    Serial.println();
+    Serial.println(); */
+#endif
     return true;
 }

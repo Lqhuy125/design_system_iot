@@ -78,10 +78,11 @@ void lora_send_imusample(const IMUSample& s) {
   // 3) append CRC32 (little-endian theo memcpy)
   memcpy(&buffer[payload_len], &crc, sizeof(crc));
   int total_len = payload_len + sizeof(crc);
-
-  /* for (int i=0; i<sizeof(IMUSample); i++) {
+#if DEBUG_APP == 1
+  for (int i=0; i<sizeof(IMUSample); i++) {
       Serial.print(buffer[i], HEX); Serial.print(" ");
-  } */
+  }
+#endif
   // 4) Gửi qua LoRa
   xSemaphoreTake(gLoraMutex, portMAX_DELAY);
   Serial.println(F("[LORA] Transmitting packet ... "));
