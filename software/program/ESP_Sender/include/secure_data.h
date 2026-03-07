@@ -7,7 +7,7 @@
 
 // IMUSample serialized: id(1) + ax(4) + ay(4) + az(4) + gx(4) + gy(4) + gz(4) + dt(4) + t_s(4) = 33 bytes
 // Padded to 32 bytes data + 4 bytes MIC = 36 bytes -> encrypt as 48 bytes (3 AES blocks)
-#define SECURE_DATA_PAYLOAD_LEN  32   // Data portion (padded)
+#define SECURE_DATA_PAYLOAD_LEN  33   // Data portion (padded)
 #define SECURE_DATA_MIC_LEN      4    // MIC length
 #define SECURE_DATA_TOTAL_LEN    48   // 3 x 16-byte AES blocks
 

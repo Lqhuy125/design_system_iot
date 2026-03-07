@@ -116,36 +116,39 @@ bool secure_beacon_verify_mic(const uint8_t cipher[16], uint8_t decrypted_out[16
     // 1) Decrypt AES-ECB block 16B
     aes_ecb_decrypt_block(BEACON_AES_KEY, cipher, decrypted_out);
 
+#if DEBUG_APP == 1
     Serial.print("[DECRYPT] Raw: ");
     for (int i = 0; i < 16; i++) {
         Serial.print(decrypted_out[i], HEX);
         Serial.print(" ");
     }
     Serial.println();
-
+#endif
     // 2) Beacon data is 12 bytes, MIC is last 4 bytes
     const size_t DATA_LEN = 12;  // sync(1) + frame_id(2) + timestamp(4) + slot_len(2) + node_id(1) + total_slots(1) + reserved(1)
     uint8_t received_mic[MIC_LEN];
     memcpy(received_mic, decrypted_out + DATA_LEN, MIC_LEN);
 
+#if DEBUG_APP == 1
     Serial.print("[DECRYPT] Received MIC: ");
     for (int i = 0; i < MIC_LEN; i++) {
         Serial.print(received_mic[i], HEX);
         Serial.print(" ");
     }
     Serial.println();
-
+#endif
     // 3) Recompute CMAC on data portion (first 12 bytes)
     uint8_t full_cmac[16];
     aes_cmac_128(MIC_KEY, decrypted_out, DATA_LEN, full_cmac);
 
+#if DEBUG_APP == 1
     Serial.print("[DECRYPT] Computed CMAC: ");
     for (int i = 0; i < 4; i++) {
         Serial.print(full_cmac[i], HEX);
         Serial.print(" ");
     }
     Serial.println();
-
+#endif
     // 4) Compare first 4 bytes of computed CMAC with received MIC
     bool mic_valid = (memcmp(full_cmac, received_mic, MIC_LEN) == 0);
 
@@ -190,15 +193,15 @@ bool secure_beacon_decrypt(const uint8_t cipher[16], TDMABeacon* beacon_out)
         return false;
     }
 
-    // Debug output
-    /* Serial.println("=== Decrypted Beacon ===");
+#if DEBUG_APP == 1
+    Serial.println("=== Decrypted Beacon ===");
     Serial.print("  sync: 0x");        Serial.println(beacon_out->sync, HEX);
     Serial.print("  frame_id: ");      Serial.println(beacon_out->frame_id);
     Serial.print("  timestamp: ");     Serial.println(beacon_out->beacon_timestamp);
     Serial.print("  slot_len_ms: ");   Serial.println(beacon_out->slot_len_ms);
     Serial.print("  node_id: ");       Serial.println(beacon_out->node_id);
     Serial.print("  total_slots: ");   Serial.println(beacon_out->total_slots);
-    Serial.println("========================"); */
-
+    Serial.println("========================");
+#endif
     return true;
 }

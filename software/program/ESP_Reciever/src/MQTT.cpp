@@ -85,7 +85,7 @@ void publishCipherData(const CipherPacket &pkt)
         reconnect();
         Serial.println("reconnect");
     }
-
+#if DEBUG_APP == 1
     Serial.print("[MQTT] CIPHER DATA TO SEND: ");
     for(uint8_t i = 0; i< SECURE_DATA_TOTAL_LEN; i++)
     {
@@ -93,7 +93,7 @@ void publishCipherData(const CipherPacket &pkt)
     Serial.print(" ");
     }
     Serial.println();
-
+#endif
     char topic[64];
     snprintf(topic, sizeof(topic), "bridge/%d/cipher", AREA_ID);
 
@@ -139,9 +139,11 @@ void reconnect()
         client.publish("notify", "Nodemcu connected to MQTT");
 
         } else {
+#if DEBUG_APP == 1
         Serial.print("failed, rc=");
         Serial.print(client.state());
         Serial.println(" try again in 5 seconds");
+#endif
         // Wait 5 seconds before retrying
         delay(5000);
         }

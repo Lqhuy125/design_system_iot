@@ -176,52 +176,54 @@ bool secure_data_encrypt(const IMUSample& sample, uint8_t cipher_out[SECURE_DATA
     memset(plaintext, 0, sizeof(plaintext));
 
     uint8_t data_len = serializeIMUSample(sample, plaintext);
-
-    /* Serial.print("[ENCRYPT] PLAIN DATA: ");
+#if DEBUG_APP == 1
+    Serial.print("[ENCRYPT] PLAIN DATA: ");
     for (int i = 0; i < data_len; i++) {
         Serial.print(plaintext[i], HEX);
         Serial.print(" ");
     }
-    Serial.println(); */
+    Serial.println();
+#endif
     // 2) Compute CMAC on serialized data
     uint8_t full_cmac[16];
     aes_cmac_128(DATA_MIC_KEY, plaintext, data_len, full_cmac);
 
-    // 3) Append 4-byte MIC after data (at offset 32)
+    // 3) Append 4-byte MIC after data (at offset 33)
     memcpy(&plaintext[SECURE_DATA_PAYLOAD_LEN], full_cmac, SECURE_DATA_MIC_LEN);
 
     // 4) Pad remaining bytes with PKCS7 style (fill with padding length)
-    // Data is 33 bytes, we pad to 32, then add 4 MIC = 36 bytes
-    // We need to encrypt 48 bytes (3 blocks), so pad 36->48 with zeros or 0x0C
+    // Data is 33 bytes then add 4 MIC = 37 bytes
+    // We need to encrypt 48 bytes (3 blocks), so pad 37->48 with zeros or 0x0C
     for (size_t i = SECURE_DATA_PAYLOAD_LEN + SECURE_DATA_MIC_LEN; i < SECURE_DATA_TOTAL_LEN; i++) {
         plaintext[i] = 0;
     }
-
-    /* Serial.print("[ENCRYPT] PLAIN DATA AFTER CMAC AND PADDING: ");
+#if DEBUG_APP == 1
+    Serial.print("[ENCRYPT] PLAIN DATA AFTER CMAC AND PADDING: ");
     for (int i = 0; i < SECURE_DATA_TOTAL_LEN; i++) {
         Serial.print(plaintext[i], HEX);
         Serial.print(" ");
-    } */
-
+    }
+#endif
     // 5) Encrypt with AES-128-CBC
     aes_cbc_encrypt(DATA_AES_KEY, DATA_IV, plaintext, cipher_out, SECURE_DATA_TOTAL_LEN);
 
-    /* Serial.print("[ENCRYPT] CIPHER DATA: ");
+#if DEBUG_APP == 1
+    Serial.print("[ENCRYPT] CIPHER DATA: ");
     for (int i = 0; i < SECURE_DATA_TOTAL_LEN; i++) {
         Serial.print(cipher_out[i], HEX);
         Serial.print(" ");
     }
-    Serial.println(); */
+    Serial.println();
     
-    /* Serial.print("[ENCRYPT] Data len: ");
+    Serial.print("[ENCRYPT] Data len: ");
     Serial.println(data_len);
     Serial.print("[ENCRYPT] MIC: ");
     for (int i = 0; i < SECURE_DATA_MIC_LEN; i++) {
         Serial.print(full_cmac[i], HEX);
         Serial.print(" ");
     }
-    Serial.println(); */
-
+    Serial.println();
+#endif
     return true;
 }
 

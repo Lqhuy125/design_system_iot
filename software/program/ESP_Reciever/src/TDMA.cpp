@@ -79,8 +79,8 @@ uint8_t tdma_send_beacon_broadcast(
 
 void BeaconConfiguration()
 {  
-  cfg.slot_len_ms   = 700; /* Calculate time run of one node */
-  cfg.total_slots   = SLAVE_NODE_ID + 2; /* Recommend to config the number of nodes + 1 */
+  cfg.slot_len_ms   = 420; /* Calculate time run of one node */
+  cfg.total_slots   = SLAVE_NODE_ID+1; /* Recommend to config the number of nodes + 1 */
   cfg.broadcast_mode= true;   // phát 1 beacon chung
   cfg.max_node_id   = 0;      // không dùng khi broadcast
   cfg.start_frame_id= 1;

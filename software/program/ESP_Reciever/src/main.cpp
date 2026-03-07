@@ -191,6 +191,7 @@ void lora_process_task(void* pv) {
       int state = radio.readData(cpk.data, SECURE_DATA_TOTAL_LEN);
       cpk.timestamp = millis();
 
+#if DEBUG_APP == 1
       Serial.print("[LORA] CIPHER DATA RECIEVE: ");
       for(uint8_t i = 0; i< SECURE_DATA_TOTAL_LEN; i++)
       {
@@ -198,7 +199,7 @@ void lora_process_task(void* pv) {
         Serial.print(" ");
       }
       Serial.println();
-
+#endif
       if (state == RADIOLIB_ERR_NONE) {
         /* if (deserializeIMUSample(s, rxBuf, IMU_TOTAL_LEN)) {
           if (xQueueSend(gMqttQueue, &s, 0) != pdTRUE) {
@@ -229,7 +230,7 @@ void mqtt_push_task(void* pv) {
   uint32_t lastLoop = 0;
   uint32_t lastPrint = 0;
   uint32_t cnt_loop = 0;
-  // Serial.println("Checkpoint3");
+
   for (;;) {
     // 1) chờ sample cần publish
     if (xQueueReceive(gMqttQueue, &cpk, portMAX_DELAY) == pdTRUE) {
