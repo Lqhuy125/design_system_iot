@@ -1,0 +1,28 @@
+how to run server.js: 
+step 1: run in cmd with 'npm i expres mongoose path nodemon'
+step 2: node server.js
+
+N?u x?y ra l?i, th?c hi?n theo cac step sau: 
+
+Cach 1: 
+
+Check thu vien thieu khong: npm ls express
+
+Ch?a c¨® => L?i
+
+How to Fix: 
+
+Check folder xem ?? install ???c th¨¤nh c?ng nh?ng file n¨¤y hay ch?a
+
+
+1. npm init -y
+
+2. npm install express cors mongoose mqtt
+
+3.?? c¨®
+
+How to run plot chart with each node:
+
+
+
+

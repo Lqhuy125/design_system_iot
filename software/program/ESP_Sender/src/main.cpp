@@ -64,7 +64,7 @@ void setup() {
   xTaskCreatePinnedToCore(sensor_task,        /* Name of task function  */
                           "SensorTask",       /* Name task */
                           4096,               /* usStackDepth */
-                          (void*)gTransmit,  /* Queue handler, name Queue to refer */
+                          (void*)gTransmit,   /* Queue handler, name Queue to refer */
                           2,                  /* Priority */
                           &hSensor,           /* Task hander */
                           0);                 /* Core ID */
