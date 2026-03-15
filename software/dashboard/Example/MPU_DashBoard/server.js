@@ -7,6 +7,7 @@ const mqtt = require('mqtt'); // ✅ add this
 
 const app = express();
 
+const { decryptCipherData } = require("./cryptoUtils");
 // ===== Middleware =====
 app.use(cors());
 app.use(express.json());
@@ -20,7 +21,8 @@ const MONGO_DB = process.env.MONGO_DB || 'bridge_shm';
 // MQTT configs (server-side subscriber)
 const MQTT_URL  = process.env.MQTT_URL  || 'mqtt://broker.hivemq.com:1883'; // TCP MQTT
 const MQTT_QOS  = Number(process.env.MQTT_QOS || 1);
-const MQTT_TOPIC = process.env.MQTT_TOPIC || 'bridge/+/+/imu';
+// const MQTT_TOPIC = process.env.MQTT_TOPIC || 'bridge/+/+/imu';
+const MQTT_TOPIC = process.env.MQTT_TOPIC || 'bridge/+/cipher';
 
 // ===== Kết nối MongoDB & start server =====
 (async () => {
@@ -93,43 +95,91 @@ function startMqttMongoBridge() {
   client.on('close', () => console.log('✖ MQTT connection closed'));
   client.on('error', (err) => console.error('❌ MQTT error:', err?.message || err));
 
-  client.on('message', async (topic, buf) => {
-    // Expect "bridge/<area>/<node>/imu"
-    const m = topic.match(/^bridge\/([^/]+)\/([^/]+)\/imu$/);
-    if (!m) return;
-    const area = String(m[1]);
-    const name_node = String(m[2]);
+  // client.on('message', async (topic, buf) => {
+  //   // Expect "bridge/<area>/<node>/imu"
+  //   // const m = topic.match(/^bridge\/([^/]+)\/([^/]+)\/imu$/);
+  //   const m = topic.match(/^bridge\/([^/]+)\/cipher$/);
+  //   if (!m) return;
+  //   const area = String(m[1]);
+  //   const name_node = String(m[2]);
 
-    let msg;
-    try {
-      msg = JSON.parse(buf.toString().trim());
-    } catch (e) {
-      console.warn('⚠️ JSON parse error:', e);
+  //   /* let msg;
+  //   try {
+  //     msg = JSON.parse(buf.toString().trim());
+  //   } catch (e) {
+  //     console.warn('⚠️ JSON parse error:', e);
+  //     return;
+  //   } */
+  //   const msg = JSON.parse(buf.toString());
+  //   const cipher = msg.cipher;
+
+  //   const result = decryptCipherData(cipher);
+
+  //   const imu = result.imu;
+
+  //   // Normalize values (number or null)
+  //   /* const toNum = (v) => (typeof v === 'number' ? v : (v == null ? null : Number(v)));
+  //   const doc = {
+  //     time: new Date(), // server receive time
+  //     area,
+  //     name_node,
+  //     ax: toNum(msg.ax),
+  //     ay: toNum(msg.ay),
+  //     az: toNum(msg.az),
+  //     gx: toNum(msg.gx),
+  //     gy: toNum(msg.gy),
+  //     gz: toNum(msg.gz),
+  //     temp: toNum(msg.temp),
+  //   }; */
+  //   const doc = {
+  //     time: new Date(),
+  //     area,
+  //     name_node: `N${String(imu.id).padStart(2,'0')}`,
+  //     ax: imu.ax,
+  //     ay: imu.ay,
+  //     az: imu.az,
+  //     gx: imu.gx,
+  //     gy: imu.gy,
+  //     gz: imu.gz,
+  //   };
+  //   try {
+  //     await Sample.create(doc);
+  //     // console.log('➕ Saved sample:', doc);
+  //   } catch (e) {
+  //     console.error('❌ Mongo insert error:', e);
+  //   }
+  // });
+
+  client.on("message", async (topic, buf)=>{
+
+    const m = topic.match(/^bridge\/([^/]+)\/cipher$/);
+    if(!m) return;
+  
+    const area = m[1];
+  
+    const msg = JSON.parse(buf.toString());
+  
+    const result = decryptCipherData(msg.cipher);
+  
+    if(!result.success){
+      console.warn("Decrypt failed");
       return;
     }
-
-    // Normalize values (number or null)
-    const toNum = (v) => (typeof v === 'number' ? v : (v == null ? null : Number(v)));
-    const doc = {
-      time: new Date(), // server receive time
+  
+    const imu = result.imu;
+  
+    await Sample.create({
+      time:new Date(),
       area,
-      name_node,
-      ax: toNum(msg.ax),
-      ay: toNum(msg.ay),
-      az: toNum(msg.az),
-      gx: toNum(msg.gx),
-      gy: toNum(msg.gy),
-      gz: toNum(msg.gz),
-      temp: toNum(msg.temp),
-    };
-
-    try {
-      await Sample.create(doc);
-      // console.log('➕ Saved sample:', doc);
-    } catch (e) {
-      console.error('❌ Mongo insert error:', e);
-    }
+      name_node:`N${String(imu.id).padStart(2,"0")}`,
+      ax:imu.ax,
+      ay:imu.ay,
+      az:imu.az,
+      gx:imu.gx,
+      gy:imu.gy,
+      gz:imu.gz
+    });
+  
   });
-
   return client;
 }
