@@ -192,6 +192,11 @@ void lora_tx_task(void* pv) {
 
             uint32_t t1 = micros();
 
+            /* Move to recieve beacon moed */
+            radio_config_beacon();
+            /* Time delay for switch TX -> RX */
+            radio.standby();
+            delayMicroseconds(3000);   // 2–5 ms
             // 6) Return to RX mode
             setModeRX();
             Serial.print("TX time (us): "); Serial.println(t1 - t0);

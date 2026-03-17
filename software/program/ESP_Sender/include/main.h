@@ -21,7 +21,7 @@
 /* Define the number of nodes in system */
 #define MAX_NODES 5
 #define SLAVE_NODE
-#define SLAVE_NODE_ID 2
+#define SLAVE_NODE_ID 1
 
 /* Define the function of RTOS task */
 void lora_process_task(void* pv);
