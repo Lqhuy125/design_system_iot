@@ -1,4 +1,8 @@
 #include "Sensor.h"
+#include "main.h"
+
+// Add external declaration for log_task
+extern void log_task(uint8_t task_id, uint16_t value);
 
 Adafruit_MPU6050 mpu;
 
@@ -29,7 +33,7 @@ int sensor_read(IMUSample* out)
   xSemaphoreGive(gI2CMutex);
   /* Print out the values */
   const float MS2_TO_G = 1.0f / 9.80665f;
-  
+
   out->ax = a.acceleration.x * MS2_TO_G;
   out->ay = a.acceleration.y * MS2_TO_G;
   out->az = (a.acceleration.z * MS2_TO_G); //Celebration each micro controller
@@ -53,32 +57,24 @@ int sensor_read(IMUSample* out)
 
 // ------------------- FreeRTOS Sensor Task -------------------
 
-void sensor_task(void* pv) 
-{
+void sensor_task(void* pv) {
   QueueHandle_t q = (QueueHandle_t)pv;
-  const TickType_t periodTicks = pdMS_TO_TICKS(80); //  const TickType_t periodTicks = pdMS_TO_TICKS(5); // ~200 Hz
   TickType_t lastWake = xTaskGetTickCount();
+  const TickType_t periodTicks = pdMS_TO_TICKS(10);  // Example: 100Hz
 
   for (;;) {
     IMUSample s;
-    /* uint8_t max = 3;
-    uint8_t min = 1;
-    uint8_t num = (rand() % (max - min + 1)) + min; */
     s.id = SLAVE_NODE_ID;
+
+    uint64_t start = esp_timer_get_time();
+
     if (sensor_read(&s) == 0) {
-      // gửi vào queue (không block quá lâu)
-      /* xQueueSend(q, &s, 0); */
       xQueueOverwrite(q, &s);
-      /* Serial.print(" id: ");     Serial.print(s.id);
-      Serial.print(" ax_n: ");   Serial.print(s.ax, 3);
-      Serial.print(" ay_n: ");   Serial.print(s.ay, 3);
-      Serial.print(" az_n: ");   Serial.print(s.az, 3);
-      Serial.print(" gx: ");     Serial.print(s.gx, 3);
-      Serial.print(" gy: ");     Serial.print(s.gy, 3);
-      Serial.print(" gz: ");     Serial.print(s.gz, 3);
-      Serial.print(" t(ms): ");  Serial.println(s.dt * 1000.0f, 2);
-      Serial.print("time(s): "); Serial.println(s.t_s, 3); */
     }
+
+    uint64_t end = esp_timer_get_time();
+    log_task(0, (uint16_t)(end - start));  // Log sensor read time
+
     vTaskDelayUntil(&lastWake, periodTicks);
   }
 }

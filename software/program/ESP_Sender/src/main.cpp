@@ -1,5 +1,26 @@
 #include "main.h"
 
+#define LOG_SIZE 1000
+
+/*======================== TASK LOGGER ========================*/
+void log_task(uint8_t task_id, uint16_t value);
+void dump_logs();
+
+typedef struct {
+    uint16_t sensor[LOG_SIZE];
+    uint16_t encrypt[LOG_SIZE];
+    uint16_t lora_tx[LOG_SIZE];
+
+    uint16_t idx_sensor;
+    uint16_t idx_encrypt;
+    uint16_t idx_lora;
+
+    bool printed;
+} TaskLogger;
+
+TaskLogger logger = {0};
+/*===========================================================*/
+
 QueueHandle_t gTransmit;
 QueueHandle_t gEncryptedQueue;  // New queue for encrypted data
 TaskHandle_t  hSensor, hLoraProcess, hEncrypt;
@@ -110,8 +131,13 @@ void encrypt_task(void* pv) {
   for (;;) {
     // Wait for raw IMU sample from sensor task
     if (xQueueReceive(gTransmit, &s, portMAX_DELAY) == pdTRUE) {
+      uint64_t start = esp_timer_get_time();
+
       // Encrypt the IMU sample
       pkt.valid = secure_data_encrypt(s, pkt.cipher);
+
+      uint64_t end = esp_timer_get_time();
+      log_task(1, (uint16_t)(end - start));  // Log encrypt time
 
       if (pkt.valid) {
         // Send encrypted packet to LoRa task (overwrite if queue full)
@@ -182,7 +208,7 @@ void lora_tx_task(void* pv) {
           if (pkt.valid) {
             // 5) TX in slot
             setModeTX();
-            uint32_t t0 = micros();
+            uint64_t start = esp_timer_get_time();
 
             // Send encrypted data directly
             xSemaphoreTake(gLoraMutex, portMAX_DELAY);
@@ -190,7 +216,8 @@ void lora_tx_task(void* pv) {
             int state = radio.transmit(pkt.cipher, SECURE_DATA_TOTAL_LEN);
             xSemaphoreGive(gLoraMutex);
 
-            uint32_t t1 = micros();
+            uint64_t end = esp_timer_get_time();
+            log_task(2, (uint16_t)(end - start));  // Log LoRa TX time
 
             /* Move to recieve beacon moed */
             radio_config_beacon();
@@ -199,7 +226,9 @@ void lora_tx_task(void* pv) {
             delayMicroseconds(3000);   // 2–5 ms
             // 6) Return to RX mode
             setModeRX();
-            Serial.print("TX time (us): "); Serial.println(t1 - t0);
+            #if DEBUG_APP
+            Serial.print("TX time (us): "); Serial.println((uint32_t)(end - start));
+            #endif
 
             if (state != RADIOLIB_ERR_NONE) {
               Serial.print("TX failed, code: "); Serial.println(state);
@@ -244,4 +273,59 @@ void transmit_without_rtos()
       Serial.print(" time(s): "); Serial.println(s.t_s, 3);
     }
   }
+}
+
+/*======================== TASK LOGGING FUNCTIONS ========================*/
+void log_task(uint8_t task_id, uint16_t value)
+{
+    if (logger.printed) return;
+
+    switch (task_id)
+    {
+        case 0: // Sensor
+            if (logger.idx_sensor < LOG_SIZE)
+                logger.sensor[logger.idx_sensor++] = value;
+            break;
+
+        case 1: // Encrypt
+            if (logger.idx_encrypt < LOG_SIZE)
+                logger.encrypt[logger.idx_encrypt++] = value;
+            break;
+
+        case 2: // LoRa TX
+            if (logger.idx_lora < LOG_SIZE)
+                logger.lora_tx[logger.idx_lora++] = value;
+            break;
+    }
+
+    // Check if all logs are full
+    if (logger.idx_sensor >= LOG_SIZE &&
+        logger.idx_encrypt >= LOG_SIZE &&
+        logger.idx_lora >= LOG_SIZE)
+    {
+        dump_logs();
+        logger.printed = true;
+    }
+}
+
+void dump_logs()
+{
+    Serial.println("===== TASK EXECUTION TIME LOGS (in microseconds) =====");
+
+    Serial.println("SENSOR_LOG_START");
+    for (int i = 0; i < LOG_SIZE; i++)
+        Serial.println(logger.sensor[i]);
+    Serial.println("SENSOR_LOG_END");
+
+    Serial.println("ENCRYPT_LOG_START");
+    for (int i = 0; i < LOG_SIZE; i++)
+        Serial.println(logger.encrypt[i]);
+    Serial.println("ENCRYPT_LOG_END");
+
+    Serial.println("LORA_TX_LOG_START");
+    for (int i = 0; i < LOG_SIZE; i++)
+        Serial.println(logger.lora_tx[i]);
+    Serial.println("LORA_TX_LOG_END");
+
+    Serial.println("===== END OF LOGS =====");
 }
