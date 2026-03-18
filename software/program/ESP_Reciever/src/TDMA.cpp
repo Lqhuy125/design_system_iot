@@ -40,7 +40,7 @@ static inline TDMABeacon tdma_make_beacon(
 static inline uint8_t tdma_send_beacon(const TDMABeacon& b) {
   // Có thể verify trước khi gửi
   if (!tdma_beacon_verify(b)) {
-    Serial.println("[TDMA/Master] Beacon verify failed before TX");
+    
     return false;
   }
 

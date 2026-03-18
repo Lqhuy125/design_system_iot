@@ -21,7 +21,7 @@ static  void tdma_beacon_fill_crc(TDMABeacon& b) {
 static  bool tdma_beacon_verify(const TDMABeacon& b) {
   if (b.sync != 0xAA)
   {
-    Serial.println("sync id error "); Serial.print(b.sync);
+    
     return false;
   }
   const size_t len_wo_crc = sizeof(TDMABeacon) - sizeof(uint32_t);
@@ -33,11 +33,11 @@ static  bool tdma_beacon_deserialize(TDMABeacon &out, const uint8_t* buf, size_t
   memcpy(&recv_crc, &buf[BEACON_PAYLOAD_LEN], sizeof(recv_crc));
   uint32_t calc_crc = calcCRC32(buf, BEACON_PAYLOAD_LEN);
   if (calc_crc != recv_crc) {
-    Serial.println(F("❌ CRC ERROR (Beacon)"));
+    
     for (int i=0; i<sizeof(TDMABeacon); i++) {
-        Serial.print(buf[i], HEX); Serial.print(" ");
+        
     }
-    Serial.println(" ");
+    
     return false;
   }
 
@@ -52,9 +52,9 @@ static  bool tdma_beacon_deserialize(TDMABeacon &out, const uint8_t* buf, size_t
 
 #if DEBUG_APP == 1
   for (int i=0; i<sizeof(TDMABeacon); i++) {
-      Serial.print(buf[i], HEX); Serial.print(" ");
+      
   }
-  Serial.println(" ");
+  
 #endif
   return true;
 
@@ -71,17 +71,17 @@ bool lora_receive_beacon(TDMABeacon& out) {
   radio_config_uplink();
 
 #if DEBUG_APP == 1
-  Serial.print("[RX] Cipher: ");
+  
   for (int i = 0; i < SECURE_BEACON_LEN; i++) {
-      Serial.print(cipher[i], HEX);
-      Serial.print(" ");
+      
+      
   }
-  Serial.println();
+  
 #endif
 
   if (state != RADIOLIB_ERR_NONE) {
-      Serial.print("[RX] Read error: ");
-      Serial.println(state);
+      
+      
       xSemaphoreGive(gLoraMutex);
       return false;
   }
@@ -89,15 +89,15 @@ bool lora_receive_beacon(TDMABeacon& out) {
   int len = radio.getPacketLength();
   if ((len != BEACON_TOTAL_LEN))
   {
-    Serial.print("[RX] Invalid length: ");
-    Serial.println(len);
+    
+    
     xSemaphoreGive(gLoraMutex);
     return false;
   }
 
   // Decrypt and verify MIC
   if (!secure_beacon_decrypt(cipher, &out)) {
-      Serial.println("[RX] Decrypt/MIC failed");
+      
       xSemaphoreGive(gLoraMutex);
       return false;
   }
@@ -114,8 +114,8 @@ uint8_t tdma_choose_slot(uint8_t my_id, const TDMABeacon& b) {
   if (b.node_id == 0) {
       if (b.total_slots == 0) return 0;
       uint8_t idx = (uint8_t)((my_id > 0 ? (my_id - 1) : 0) % b.total_slots);
-      Serial.print("[TDMA] Broadcast mode, my slot: ");
-      Serial.println(idx);
+      
+      
       return idx;
   }
   // Targeted: slot = node_id - 1 theo mô tả trong header
@@ -123,13 +123,13 @@ uint8_t tdma_choose_slot(uint8_t my_id, const TDMABeacon& b) {
   // Targeted mode: only specific node transmits
   if (b.node_id == my_id) {
       uint8_t idx = (uint8_t)(b.node_id - 1);
-      Serial.print("[TDMA] Targeted mode, my slot: ");
-      Serial.println(idx);
+      
+      
       return idx;
   }
 
   // Not my turn
-  Serial.println("[TDMA] Not my slot this frame");
+  
   return 0xFF;  // Invalid slot marker
 }
 

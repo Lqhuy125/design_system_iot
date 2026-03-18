@@ -27,7 +27,7 @@ TaskHandle_t  hSensor, hLoraProcess, hEncrypt;
 
 SemaphoreHandle_t gI2CMutex;
 SemaphoreHandle_t gLoraMutex;
-
+SemaphoreHandle_t gLogMutex;
 /*======================== VAR BEACON ========================*/
 
 /*===========================================================*/
@@ -80,11 +80,11 @@ void lora_tx_task(void* pv);
 
 void setup() {
   Serial.begin(9600);
-  Serial.println("Node ID:"); Serial.print(SLAVE_NODE_ID);
+  
 
   gI2CMutex = xSemaphoreCreateMutex();
   gLoraMutex = xSemaphoreCreateMutex();
-
+  gLogMutex = xSemaphoreCreateMutex();
   InitLora();
   radio.setPacketReceivedAction(dio0_isr);
 
@@ -110,7 +110,7 @@ void setup() {
     "LoRaTxTask", 4096, nullptr, 2, &hLoraProcess, 1);  // Core 1 for LoRa
 
   setModeRX();
-  Serial.println("RTOS pipeline started: Sensor->Encrypt->LoRaTx");
+  
 }
 
 void loop() {
@@ -123,7 +123,7 @@ void loop() {
 */
 void encrypt_task(void* pv) {
   (void)pv;
-  Serial.println("encrypt_task started");
+  
 
   IMUSample s;
   EncryptedPacket pkt;
@@ -143,10 +143,10 @@ void encrypt_task(void* pv) {
         // Send encrypted packet to LoRa task (overwrite if queue full)
         xQueueOverwrite(gEncryptedQueue, &pkt);
         #if DEBUG_APP
-        Serial.println("[ENCRYPT] Packet encrypted and queued");
+        
         #endif
       } else {
-        Serial.println("[ENCRYPT] Encryption failed!");
+        
       }
     }
 
@@ -158,9 +158,10 @@ void encrypt_task(void* pv) {
     =========== LoRa TX Task ============
     Handles beacon reception and transmits encrypted data in TDMA slots
 */
+volatile uint64_t end_lora;
 void lora_tx_task(void* pv) {
   (void)pv;
-  Serial.println("lora_tx_task started");
+  
   setModeRX();  // Start in RX mode to catch beacon
 
   EncryptedPacket pkt;
@@ -179,7 +180,7 @@ void lora_tx_task(void* pv) {
 
         // Skip if not our slot (targeted mode)
         if (slot_idx == 0xFF) {
-          Serial.println("Not my slot, skipping");
+          
           setModeRX();
           vTaskDelay(pdMS_TO_TICKS(1));
           continue;
@@ -198,7 +199,7 @@ void lora_tx_task(void* pv) {
         now = millis();
         uint32_t remain_ms = (t_end > now) ? (t_end - now) : 0;
         if (remain_ms == 0) {
-          Serial.println("Missed slot -> skip");
+          
           setModeRX();
           continue;
         }
@@ -216,8 +217,8 @@ void lora_tx_task(void* pv) {
             int state = radio.transmit(pkt.cipher, SECURE_DATA_TOTAL_LEN);
             xSemaphoreGive(gLoraMutex);
 
-            uint64_t end = esp_timer_get_time();
-            log_task(2, (uint16_t)(end - start));  // Log LoRa TX time
+            
+            log_task(2, (uint16_t)(end_lora - start));  // Log LoRa TX time
 
             /* Move to recieve beacon moed */
             radio_config_beacon();
@@ -227,20 +228,20 @@ void lora_tx_task(void* pv) {
             // 6) Return to RX mode
             setModeRX();
             #if DEBUG_APP
-            Serial.print("TX time (us): "); Serial.println((uint32_t)(end - start));
+            
             #endif
 
             if (state != RADIOLIB_ERR_NONE) {
-              Serial.print("TX failed, code: "); Serial.println(state);
+              
             }
           } else {
-            Serial.println("Invalid encrypted packet -> skip TX");
+            
           }
         } else {
-          Serial.println("No encrypted sample -> skip TX");
+          
         }
       } else {
-        Serial.println("Beacon parse/CRC failed");
+        
         esp_restart();
       }
     }
@@ -262,15 +263,15 @@ void transmit_without_rtos()
     if (millis() - lastPrint >= 500) {
       lastPrint = millis();
 
-      Serial.print("  id: ");  Serial.print(s.id);
-      Serial.print("  ax_n: ");  Serial.print(s.ax, 3);
-      Serial.print("  ay_n: ");  Serial.print(s.ay, 3);
-      Serial.print("  az_n: ");  Serial.print(s.az, 3);
-      Serial.print("  gx: ");  Serial.print(s.gx, 3);
-      Serial.print("  gy: ");  Serial.print(s.gy, 3);
-      Serial.print("  gz: ");  Serial.print(s.gz, 3);
-      Serial.print("  t(ms): "); Serial.println(s.dt * 1000.0f, 2);
-      Serial.print(" time(s): "); Serial.println(s.t_s, 3);
+      
+      
+      
+      
+      
+      
+      
+      
+      
     }
   }
 }
@@ -280,31 +281,37 @@ void log_task(uint8_t task_id, uint16_t value)
 {
     if (logger.printed) return;
 
+    xSemaphoreTake(gLogMutex, portMAX_DELAY);
+
     switch (task_id)
     {
-        case 0: // Sensor
+        case 0:
             if (logger.idx_sensor < LOG_SIZE)
                 logger.sensor[logger.idx_sensor++] = value;
             break;
 
-        case 1: // Encrypt
+        case 1:
             if (logger.idx_encrypt < LOG_SIZE)
                 logger.encrypt[logger.idx_encrypt++] = value;
             break;
 
-        case 2: // LoRa TX
+        case 2:
             if (logger.idx_lora < LOG_SIZE)
                 logger.lora_tx[logger.idx_lora++] = value;
             break;
     }
 
-    // Check if all logs are full
-    if (logger.idx_sensor >= LOG_SIZE &&
-        logger.idx_encrypt >= LOG_SIZE &&
-        logger.idx_lora >= LOG_SIZE)
+    bool ready =
+        (logger.idx_sensor >= LOG_SIZE &&
+         logger.idx_encrypt >= LOG_SIZE &&
+         logger.idx_lora >= LOG_SIZE);
+
+    xSemaphoreGive(gLogMutex);
+
+    if (ready && !logger.printed)
     {
+        logger.printed = true;   // ⚠️ set trước khi dump
         dump_logs();
-        logger.printed = true;
     }
 }
 
