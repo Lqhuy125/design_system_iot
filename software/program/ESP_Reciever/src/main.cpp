@@ -5,7 +5,6 @@
 #define PACKET_TOTAL_LEN (SECURE_DATA_TOTAL_LEN + sizeof(uint16_t))
 
 // ==================== PDR TRACKER ====================
-#define MAX_NODES 8
 
 typedef struct {
     uint16_t last_seq_id;
@@ -43,27 +42,36 @@ void pdr_tracker_update(PDRTracker* tracker, uint8_t node_id, uint16_t seq_id) {
         node->last_seq_id = seq_id;
         node->packets_received = 1;
         node->packets_lost = 0;
-    } else {
-        uint16_t expected = node->last_seq_id + 1;
-        uint16_t lost = 0;
+        xSemaphoreGive(tracker->mutex);
+        return;
+    }
 
-        if (seq_id == expected) {
-            lost = 0;
-        } else if (seq_id > expected) {
-            lost = seq_id - expected;
-        } else {
-            // Wrap-around case
-            lost = (0xFFFF - expected) + seq_id + 1;
-            if (lost > 1000) {
-                // Duplicate/old packet, ignore
-                xSemaphoreGive(tracker->mutex);
-                return;
-            }
-        }
+    uint16_t diff = seq_id - node->last_seq_id;
 
-        node->packets_lost += lost;
+    // ===== 1. Duplicate packet =====
+    if (diff == 0) {
+        xSemaphoreGive(tracker->mutex);
+        return;
+    }
+
+    // ===== 2. Node reset detection (VERY IMPORTANT) =====
+    if (diff > 30000) {
+        // seq_id jumped backward → node reset
+        node->last_seq_id = seq_id;
+        xSemaphoreGive(tracker->mutex);
+        return;
+    }
+
+    // ===== 3. Normal forward case =====
+    if (diff < 1000) {
+        node->packets_lost += (diff - 1);
         node->packets_received++;
         node->last_seq_id = seq_id;
+    } 
+    else {
+        // Jump quá lớn → nhiễu / sai / out-of-order → ignore
+        xSemaphoreGive(tracker->mutex);
+        return;
     }
 
     xSemaphoreGive(tracker->mutex);
@@ -167,12 +175,12 @@ WiFiClient espClient;
 PubSubClient client(espClient);
 
 // ==================== CIPHER PACKET (updated) ====================
-struct CipherPacket {
+/* struct CipherPacket {
     uint8_t  data[SECURE_DATA_TOTAL_LEN];
     uint16_t seq_id;
     uint8_t  node_id;
     uint32_t timestamp;
-};
+}; */
 
 // ==================== SETUP ====================
 void setup() {
@@ -298,6 +306,7 @@ void lora_process_task(void* pv) {
             cpk.timestamp = millis();
 
             if (state == RADIOLIB_ERR_NONE) {
+                
                 // 1) Extract cipher data
                 memcpy(cpk.data, rx_buffer, SECURE_DATA_TOTAL_LEN);
 
@@ -305,7 +314,13 @@ void lora_process_task(void* pv) {
                 memcpy(&cpk.seq_id, &rx_buffer[SECURE_DATA_TOTAL_LEN], sizeof(uint16_t));
 
                 // 3) Decrypt to get node_id for PDR tracking
-                if (secure_data_decrypt(cpk.data, &sample)) {
+                if (secure_data_decrypt(cpk.data, sample)) {
+
+                    // ===== VALIDATE NODE ID =====
+                    if (sample.id >= MAX_NODES) {
+                        Serial.println("[PDR] Invalid node_id, drop");
+                        continue;
+                    }
                     cpk.node_id = sample.id;
 
                     // 4) Update PDR tracker
@@ -324,6 +339,7 @@ void lora_process_task(void* pv) {
                 } else {
                     Serial.println("[MAIN] Decrypt failed, drop packet");
                 }
+                Serial.printf("[RX] Node=%d, seq=%u\n", cpk.node_id, cpk.seq_id);
             } else {
                 #if DEBUG_APP == 1
                 Serial.print("[MAIN] RX readData error: "); Serial.println(state);

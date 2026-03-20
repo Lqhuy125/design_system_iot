@@ -15,15 +15,16 @@
 
 #include "TDMA.h"
 #include "secure_beacon.h"
+#include "secure_data.h"
 /* Define the number of nodes in system */
-#define MAX_NODES 5
+#define MAX_NODES 4
 #define SLAVE_NODE_ID 3
 
 /* Define the function of RTOS task */
 void lora_process_task(void* pv);
 void tdma_scheduler_task(void* pv);
 void mqtt_push_task(void* pv);
-
+void pdr_report_task(void* pv);
 /* Define the function be used in program*/
 void transmit_without_rtos();
 

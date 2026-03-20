@@ -167,7 +167,6 @@ void encrypt_task(void* pv) {
 
       // Encrypt the IMU sample
       pkt.valid = secure_data_encrypt(s, pkt.cipher);
-      pkt.seq_id = g_seq_id++;  // <<< Gán seq_id tại đây
 
       uint64_t end = esp_timer_get_time();
       log_task(1, (uint16_t)(end - start));  // Log encrypt time
@@ -196,6 +195,7 @@ void lora_tx_task(void* pv) {
   (void)pv;
 
   setModeRX();  // Start in RX mode to catch beacon
+  static uint16_t tx_seq = 0;
 
   EncryptedPacket pkt;
   uint8_t tx_buffer[PACKET_TOTAL_LEN];  // Buffer để gửi: cipher + seq_id
@@ -240,6 +240,7 @@ void lora_tx_task(void* pv) {
         // 4) Get encrypted packet from queue (timeout = remaining time in slot)
         if (xQueueReceive(gEncryptedQueue, &pkt, pdMS_TO_TICKS(remain_ms)) == pdTRUE) {
           if (pkt.valid) {
+            pkt.seq_id = tx_seq++;
             // Build TX buffer: [cipher] + [seq_id]
             memcpy(tx_buffer, pkt.cipher, SECURE_DATA_TOTAL_LEN);
             memcpy(tx_buffer + SECURE_DATA_TOTAL_LEN, &pkt.seq_id, sizeof(pkt.seq_id));
