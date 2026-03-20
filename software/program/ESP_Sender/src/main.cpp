@@ -2,6 +2,8 @@
 
 #define LOG_SIZE 1000
 
+volatile uint8_t u8SlaveNodeID = 0xFU;
+
 /*======================== TASK LOGGER ========================*/
 void log_task(uint8_t task_id, uint16_t value);
 void dump_logs();
@@ -80,6 +82,31 @@ void lora_tx_task(void* pv);
 
 void setup() {
   Serial.begin(9600);
+  
+  // Get MAC Address
+uint64_t chipid = ESP.getEfuseMac();
+
+Serial.printf("ESP32 Chip ID: %llX\n", chipid);
+
+if (chipid == 0x34B7C9EA6BE8ULL)
+{
+    u8SlaveNodeID = 1;
+}
+else if (chipid == 0x5C9D26077000ULL)   // thay bằng MAC thật
+{
+    u8SlaveNodeID = 3;
+}
+else if (chipid == 0x5C07B26062ECULL)   // thay bằng MAC thật
+{
+    u8SlaveNodeID = 2;
+}
+else
+{
+    u8SlaveNodeID = 0; // unknown node
+}
+
+Serial.printf("Slave Node ID: %d\n", u8SlaveNodeID);
+
   
 
   gI2CMutex = xSemaphoreCreateMutex();
@@ -176,7 +203,7 @@ void lora_tx_task(void* pv) {
         uint32_t rx_millis = millis();
 
         // 2) Calculate slot according to TDMA
-        const uint8_t slot_idx = tdma_choose_slot(SLAVE_NODE_ID, b);
+        const uint8_t slot_idx = tdma_choose_slot(u8SlaveNodeID, b);
 
         // Skip if not our slot (targeted mode)
         if (slot_idx == 0xFF) {

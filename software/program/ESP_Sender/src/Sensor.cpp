@@ -1,9 +1,8 @@
 #include "Sensor.h"
-#include "main.h"
 
 // Add external declaration for log_task
 extern void log_task(uint8_t task_id, uint16_t value);
-
+extern volatile uint8_t u8SlaveNodeID;
 Adafruit_MPU6050 mpu;
 
 static uint32_t lastMicros = 0;
@@ -64,7 +63,8 @@ void sensor_task(void* pv) {
 
   for (;;) {
     IMUSample s;
-    s.id = SLAVE_NODE_ID;
+
+    s.id = u8SlaveNodeID;
 
     uint64_t start = esp_timer_get_time();
 
