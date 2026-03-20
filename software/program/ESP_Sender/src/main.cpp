@@ -1,9 +1,13 @@
 #include "main.h"
 
+// Thêm 2 bytes cho seq_id
+#define PACKET_TOTAL_LEN (SECURE_DATA_TOTAL_LEN + sizeof(uint16_t))
+
 #define LOG_SIZE 1000
 
 volatile uint8_t u8SlaveNodeID = 0xFU;
-
+// Thêm sau các volatile khác
+volatile uint16_t g_seq_id = 0;
 /*======================== TASK LOGGER ========================*/
 void log_task(uint8_t task_id, uint16_t value);
 void dump_logs();
@@ -42,6 +46,7 @@ IMUSample nodeData[MAX_NODES];
 // Structure to hold encrypted data for queue
 struct EncryptedPacket {
   uint8_t cipher[SECURE_DATA_TOTAL_LEN];
+  uint16_t seq_id;
   bool    valid;
 };
 
@@ -82,7 +87,7 @@ void lora_tx_task(void* pv);
 
 void setup() {
   Serial.begin(9600);
-  
+
   // Get MAC Address
 uint64_t chipid = ESP.getEfuseMac();
 
@@ -107,7 +112,7 @@ else
 
 Serial.printf("Slave Node ID: %d\n", u8SlaveNodeID);
 
-  
+
 
   gI2CMutex = xSemaphoreCreateMutex();
   gLoraMutex = xSemaphoreCreateMutex();
@@ -137,7 +142,7 @@ Serial.printf("Slave Node ID: %d\n", u8SlaveNodeID);
     "LoRaTxTask", 4096, nullptr, 2, &hLoraProcess, 1);  // Core 1 for LoRa
 
   setModeRX();
-  
+
 }
 
 void loop() {
@@ -150,7 +155,7 @@ void loop() {
 */
 void encrypt_task(void* pv) {
   (void)pv;
-  
+
 
   IMUSample s;
   EncryptedPacket pkt;
@@ -162,6 +167,7 @@ void encrypt_task(void* pv) {
 
       // Encrypt the IMU sample
       pkt.valid = secure_data_encrypt(s, pkt.cipher);
+      pkt.seq_id = g_seq_id++;  // <<< Gán seq_id tại đây
 
       uint64_t end = esp_timer_get_time();
       log_task(1, (uint16_t)(end - start));  // Log encrypt time
@@ -170,10 +176,10 @@ void encrypt_task(void* pv) {
         // Send encrypted packet to LoRa task (overwrite if queue full)
         xQueueOverwrite(gEncryptedQueue, &pkt);
         #if DEBUG_APP
-        
+
         #endif
       } else {
-        
+
       }
     }
 
@@ -188,11 +194,11 @@ void encrypt_task(void* pv) {
 volatile uint64_t end_lora;
 void lora_tx_task(void* pv) {
   (void)pv;
-  
+
   setModeRX();  // Start in RX mode to catch beacon
 
   EncryptedPacket pkt;
-
+  uint8_t tx_buffer[PACKET_TOTAL_LEN];  // Buffer để gửi: cipher + seq_id
   for (;;) {
     // 1) When RX interrupt (DIO0), try to read beacon
     if (rxDoneFlag) {
@@ -207,7 +213,7 @@ void lora_tx_task(void* pv) {
 
         // Skip if not our slot (targeted mode)
         if (slot_idx == 0xFF) {
-          
+
           setModeRX();
           vTaskDelay(pdMS_TO_TICKS(1));
           continue;
@@ -226,7 +232,7 @@ void lora_tx_task(void* pv) {
         now = millis();
         uint32_t remain_ms = (t_end > now) ? (t_end - now) : 0;
         if (remain_ms == 0) {
-          
+
           setModeRX();
           continue;
         }
@@ -234,6 +240,9 @@ void lora_tx_task(void* pv) {
         // 4) Get encrypted packet from queue (timeout = remaining time in slot)
         if (xQueueReceive(gEncryptedQueue, &pkt, pdMS_TO_TICKS(remain_ms)) == pdTRUE) {
           if (pkt.valid) {
+            // Build TX buffer: [cipher] + [seq_id]
+            memcpy(tx_buffer, pkt.cipher, SECURE_DATA_TOTAL_LEN);
+            memcpy(tx_buffer + SECURE_DATA_TOTAL_LEN, &pkt.seq_id, sizeof(pkt.seq_id));
             // 5) TX in slot
             setModeTX();
             uint64_t start = esp_timer_get_time();
@@ -241,10 +250,11 @@ void lora_tx_task(void* pv) {
             // Send encrypted data directly
             xSemaphoreTake(gLoraMutex, portMAX_DELAY);
             radio_config_uplink();
-            int state = radio.transmit(pkt.cipher, SECURE_DATA_TOTAL_LEN);
+            // int state = radio.transmit(pkt.cipher, SECURE_DATA_TOTAL_LEN);
+            int state = radio.transmit(tx_buffer, PACKET_TOTAL_LEN);  // <<< Gửi buffer mới
             xSemaphoreGive(gLoraMutex);
 
-            
+
             log_task(2, (uint16_t)(end_lora - start));  // Log LoRa TX time
 
             /* Move to recieve beacon moed */
@@ -255,20 +265,20 @@ void lora_tx_task(void* pv) {
             // 6) Return to RX mode
             setModeRX();
             #if DEBUG_APP
-            
+
             #endif
 
             if (state != RADIOLIB_ERR_NONE) {
-              
+
             }
           } else {
-            
+
           }
         } else {
-          
+
         }
       } else {
-        
+
         esp_restart();
       }
     }
@@ -290,15 +300,15 @@ void transmit_without_rtos()
     if (millis() - lastPrint >= 500) {
       lastPrint = millis();
 
-      
-      
-      
-      
-      
-      
-      
-      
-      
+
+
+
+
+
+
+
+
+
     }
   }
 }
