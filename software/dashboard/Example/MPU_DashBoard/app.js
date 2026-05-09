@@ -4,7 +4,7 @@
 const mockNodes = [
   { id:"N01", name:"Location 1", areaId:1, span:"A",  status:"online"},
   { id:"N02", name:"Location 2", areaId:1, span:"T1", status:"online"},
-  { id:"N02", name:"Location 3", areaId:1, span:"T1", status:"online"},
+  { id:"N03", name:"Location 3", areaId:1, span:"T1", status:"online"},
 ];
 
 /* Lấy danh sách của khu vực
