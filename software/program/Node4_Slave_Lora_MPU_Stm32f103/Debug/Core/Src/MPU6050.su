@@ -1,2 +1,0 @@
-../Core/Src/MPU6050.c:10:10:calcCRC32	32	static
-../Core/Src/MPU6050.c:27:6:sample_data	24	static
