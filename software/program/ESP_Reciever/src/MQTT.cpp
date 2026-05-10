@@ -24,10 +24,10 @@ void Init_Connection(void)
     WiFi.begin(WIFI_SSID, WIFI_PASS);
     while (WiFi.status() != WL_CONNECTED) {
         delay(1000);
-        Serial.println("[MQTT] Connecting to WiFi...");
+        
     }
-    Serial.println("[MQTT] Connected to WiFi");
-    Serial.println(WiFi.localIP());
+    
+    
 
     client.setServer(MQTT_HOST, MQTT_PORT);//connecting to mqtt server
     client.setCallback(callback);
@@ -44,7 +44,7 @@ void publishNodeData(const IMUSample &d)
     if (!client.connected())
     {
         reconnect();
-        Serial.println("reconnect");
+        
     }
 
     char nodeIdStr[8];
@@ -66,16 +66,16 @@ void publishNodeData(const IMUSample &d)
         d.ax, d.ay, d.az, d.gx, d.gy, d.gz
       );
       if (n < 0 || n >= (int)sizeof(json)) {
-        Serial.println("❌ JSON truncated/oversize");
+        
         return;
       }
 
     // // PubSubClient publish (QoS 0). Nếu cần retain cho status thì thêm ở topic khác.
     bool ok = client.publish(topic, json /* retain = false */);
     if (!ok) {
-      Serial.println("⚠️ MQTT publish failed (imu)");
+      
     }
-    // Serial.println("end push");
+    // 
 }
 
 void publishCipherData(const CipherPacket &pkt)
@@ -83,16 +83,16 @@ void publishCipherData(const CipherPacket &pkt)
     if (!client.connected())
     {
         reconnect();
-        Serial.println("reconnect");
+        
     }
 #if DEBUG_APP == 1
-    Serial.print("[MQTT] CIPHER DATA TO SEND: ");
+    
     for(uint8_t i = 0; i< SECURE_DATA_TOTAL_LEN; i++)
     {
-    Serial.print(pkt.data[i], HEX);
-    Serial.print(" ");
+    
+    
     }
-    Serial.println();
+    
 #endif
     char topic[64];
     snprintf(topic, sizeof(topic), "bridge/%d/cipher", AREA_ID);
@@ -116,15 +116,15 @@ void publishCipherData(const CipherPacket &pkt)
     );
 
     if (n < 0 || n >= (int)sizeof(json)) {
-        Serial.println("[MQTT] JSON truncated/oversize");
+        
         return;
     }
 
     bool ok = client.publish(topic, json);
     if (ok) {
-        Serial.println("[MQTT] MQTT cipher published");
+        
     } else {
-        Serial.println("[MQTT] MQTT publish failed (cipher)");
+        
     }
 }
 void reconnect()
@@ -132,17 +132,17 @@ void reconnect()
     client.connect("[MQTT] ESP32_clientID");
 
     while (!client.connected()) {
-        Serial.println("Attempting MQTT connection...");
+        
         if (client.connect("ESP32_clientID")) {
-        Serial.println("connected");
+        
         // Once connected, publish an announcement...
         client.publish("notify", "Nodemcu connected to MQTT");
 
         } else {
 #if DEBUG_APP == 1
-        Serial.print("failed, rc=");
-        Serial.print(client.state());
-        Serial.println(" try again in 5 seconds");
+        
+        
+        
 #endif
         // Wait 5 seconds before retrying
         delay(5000);

@@ -44,13 +44,13 @@ void radio_config_uplink() {
 void InitLora(void)
 {
     // initialize SX1278 with default settings
-    Serial.print(F("[SX1278] Initializing ... "));
+    
     int state = radio.begin();
     if (state == RADIOLIB_ERR_NONE) {
-      Serial.println(F("success!"));
+      
     } else {
-      Serial.print(F("failed, code "));
-      Serial.println(state);
+      
+      
       while (true) { delay(10); }
     }
     radio_config_beacon();
@@ -71,11 +71,11 @@ void lora_send_imusample(const IMUSample& s) {
   int total_len = payload_len + sizeof(crc);
 
   /* for (int i=0; i<sizeof(IMUSample); i++) {
-      Serial.print(buffer[i], HEX); Serial.print(" ");
+      
   } */
   // 4) Gửi qua LoRa
   xSemaphoreTake(gLoraMutex, portMAX_DELAY);
-  // Serial.println(F("[SX1278] Transmitting packet ... "));
+  // 
   int state;
   void radio_config_uplink();
   state = radio.transmit((byte*)buffer, total_len);
@@ -87,20 +87,20 @@ void lora_send_imusample(const IMUSample& s) {
 
   if (state == RADIOLIB_ERR_NONE) {
     // the packet was successfully transmitted
-    Serial.println(F(" success!"));
+    
 
   /* } else if (state == RADIOLIB_ERR_PACKET_TOO_LONG) {
     // the supplied packet was longer than 256 bytes
-    Serial.println(F("too long!"));
+    
 
   } else if (state == RADIOLIB_ERR_TX_TIMEOUT) {
     // timeout occurred while transmitting packet
-    Serial.println(F("timeout!")); */
+     */
 
   } else {
     // some other error occurred
-    Serial.print(F("failed, code "));
-    // Serial.println(state);
+    
+    // 
 
   }
   xSemaphoreGive(gLoraMutex);
@@ -112,16 +112,16 @@ void lora_send_imusample_secure(const IMUSample& s) {
 
     // Encrypt the IMU sample
     if (!secure_data_encrypt(s, cipher)) {
-        Serial.println("[TX] Encryption failed!");
+        
         return;
     }
 
     xSemaphoreTake(gLoraMutex, portMAX_DELAY);
     radio_config_uplink();
 
-    Serial.print("[TX] Sending encrypted data (");
-    Serial.print(SECURE_DATA_TOTAL_LEN);
-    Serial.println(" bytes)");
+    
+    
+    
 
     int state = radio.transmit((byte*)cipher, SECURE_DATA_TOTAL_LEN);
 
@@ -133,10 +133,10 @@ void lora_send_imusample_secure(const IMUSample& s) {
     radio.startReceive();
 
     if (state == RADIOLIB_ERR_NONE) {
-        Serial.println("[TX] Encrypted data sent successfully!");
+        
     } else {
-        Serial.print("[TX] Failed, code: ");
-        Serial.println(state);
+        
+        
     }
 
     xSemaphoreGive(gLoraMutex);
@@ -179,7 +179,7 @@ int deserializeIMUSample(IMUSample& s, const uint8_t *buffer) {
   memcpy(&s.crc, &buffer[idx], sizeof(s.crc));      idx += sizeof(s.crc);
 
   /* for (int i=0; i<sizeof(IMUSample); i++) {
-      Serial.print(buffer[i], HEX); Serial.print(" ");
+      
   } */
   return idx;
 }

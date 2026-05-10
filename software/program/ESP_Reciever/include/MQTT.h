@@ -9,7 +9,11 @@
 
 typedef struct
 {
-    uint8_t data[SECURE_DATA_TOTAL_LEN];
+    /* uint8_t data[SECURE_DATA_TOTAL_LEN];
+    uint32_t timestamp; */
+    uint8_t  data[SECURE_DATA_TOTAL_LEN];
+    uint16_t seq_id;
+    uint8_t  node_id;
     uint32_t timestamp;
 } CipherPacket;
 

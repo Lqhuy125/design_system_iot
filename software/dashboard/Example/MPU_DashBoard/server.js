@@ -34,7 +34,10 @@ const MQTT_TOPIC = process.env.MQTT_TOPIC || 'bridge/+/cipher';
     console.log(`✅ MongoDB connected: ${MONGO_URL}/${MONGO_DB}`);
 
     // --- Start HTTP server
-    app.listen(PORT, () => console.log(`🚀 Server started at http://localhost:${PORT}`));
+    // app.listen(PORT, () => console.log(`🚀 Server started at http://localhost:${PORT}`));
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`🚀 Server running on http://0.0.0.0:${PORT}`);
+    });
 
     // --- After Mongo is ready, start MQTT -> Mongo bridge ---
     startMqttMongoBridge();

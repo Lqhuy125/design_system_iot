@@ -1,9 +1,8 @@
 #include "Sensor.h"
-#include "main.h"
 
 // Add external declaration for log_task
 extern void log_task(uint8_t task_id, uint16_t value);
-
+extern volatile uint8_t u8SlaveNodeID;
 Adafruit_MPU6050 mpu;
 
 static uint32_t lastMicros = 0;
@@ -14,12 +13,12 @@ void Init_MPU6050()
 {
     // Try to initialize!
     if (!mpu.begin()) {
-        Serial.println("Failed to find MPU6050 chip");
+        
         while (1) {
         delay(10);
         }
     }
-    Serial.println("MPU6050 Found!");
+    
 }
 
 int sensor_read(IMUSample* out)
@@ -64,7 +63,8 @@ void sensor_task(void* pv) {
 
   for (;;) {
     IMUSample s;
-    s.id = SLAVE_NODE_ID;
+
+    s.id = u8SlaveNodeID;
 
     uint64_t start = esp_timer_get_time();
 

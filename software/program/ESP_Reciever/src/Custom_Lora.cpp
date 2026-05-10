@@ -52,13 +52,13 @@ void radio_config_uplink() {
 void InitLora(void)
 {
     // initialize SX1278 with default settings
-    Serial.print(F("[LORA] Initializing ... "));
+    
     int state = radio.begin();
     if (state == RADIOLIB_ERR_NONE) {
-      Serial.println(F("success!"));
+      
     } else {
-      Serial.print(F("failed, code "));
-      Serial.println(state);
+      
+      
       while (true) { delay(10); }
     }
 
@@ -80,12 +80,12 @@ void lora_send_imusample(const IMUSample& s) {
   int total_len = payload_len + sizeof(crc);
 #if DEBUG_APP == 1
   for (int i=0; i<sizeof(IMUSample); i++) {
-      Serial.print(buffer[i], HEX); Serial.print(" ");
+      
   }
 #endif
   // 4) Gửi qua LoRa
   xSemaphoreTake(gLoraMutex, portMAX_DELAY);
-  Serial.println(F("[LORA] Transmitting packet ... "));
+  
   int state;
   state = radio.transmit((byte*)buffer, total_len);
   // byte byteArr[] = {0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF};
@@ -93,25 +93,25 @@ void lora_send_imusample(const IMUSample& s) {
 
   if (state == RADIOLIB_ERR_NONE) {
     // the packet was successfully transmitted
-    Serial.println(F(" success!"));
+    
 
     // print measured data rate
-    /* Serial.print(F("[SX1278] Datarate:\t"));
-    Serial.print(radio.getDataRate());
-    Serial.println(F(" bps")); */
+    /* 
+    
+     */
 
   } else if (state == RADIOLIB_ERR_PACKET_TOO_LONG) {
     // the supplied packet was longer than 256 bytes
-    Serial.println(F("too long!"));
+    
 
   } else if (state == RADIOLIB_ERR_TX_TIMEOUT) {
     // timeout occurred while transmitting packet
-    Serial.println(F("timeout!"));
+    
 
   } else {
     // some other error occurred
-    Serial.print(F("failed, code "));
-    Serial.println(state);
+    
+    
 
   }
   xSemaphoreGive(gLoraMutex);
@@ -148,11 +148,11 @@ bool lora_receive_once(IMUSample &out) {
     memcpy(&recv_crc, &buf[IMU_PAYLOAD_LEN], sizeof(recv_crc));
     uint32_t calc_crc = calcCRC32(buf, IMU_PAYLOAD_LEN);
     if (calc_crc != recv_crc) {
-      /* Serial.println(F("❌ CRC ERROR (IMU)"));
+      /* 
       for (int i=0; i<sizeof(IMUSample); i++) {
-          Serial.print(buf[i], HEX); Serial.print(" ");
+          
       }
-      Serial.println(" "); */
+       */
       return false;
     }
 
@@ -178,10 +178,10 @@ bool lora_receive_once(IMUSample &out) {
     // Không có gói trong window – normal
     return false;
   } else if (state == RADIOLIB_ERR_CRC_MISMATCH) {
-    Serial.println(F("CRC error (PHY)"));
+    
     return false;
   } else {
-    Serial.print(F("RX failed, code ")); Serial.println(state);
+    
     return false;
   }
 }
@@ -192,11 +192,11 @@ bool deserializeIMUSample(IMUSample &out, const uint8_t* buf, size_t len) {
   memcpy(&recv_crc, &buf[IMU_PAYLOAD_LEN], sizeof(recv_crc));
   uint32_t calc_crc = calcCRC32(buf, IMU_PAYLOAD_LEN);
   if (calc_crc != recv_crc) {
-    /* Serial.println(F("❌ CRC ERROR (IMU)"));
+    /* 
     for (int i=0; i<sizeof(IMUSample); i++) {
-        Serial.print(buf[i], HEX); Serial.print(" ");
+        
     }
-    Serial.println(" "); */
+     */
     return false;
   }
 
