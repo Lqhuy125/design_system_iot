@@ -26,6 +26,9 @@
 		},
 		{
 			"path": "."
+		},
+		{
+			"path": "software/dashboard/Example/MPU_DashBoard"
 		}
 	],
 	"settings": {
